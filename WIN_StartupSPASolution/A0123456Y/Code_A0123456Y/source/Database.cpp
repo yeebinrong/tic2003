@@ -67,14 +67,46 @@ void Database::close() {
 	sqlite3_close(dbConnection);
 }
 
-// method to insert a procedure into the database
-void Database::insertProcedure(string procedureName) {
-	string insertProcedureSQL = "INSERT INTO procedures ('procedureName') VALUES ('" + procedureName + "');";
-	sqlite3_exec(dbConnection, insertProcedureSQL.c_str(), NULL, 0, &errorMessage);
+// method to insert a Variable into the database
+void Database::insertVariables(string variableName) {
+	string insertVariablesSQL = "INSERT INTO variables ('variableName') VALUES ('" + variableName + "');";
+	sqlite3_exec(dbConnection, insertVariablesSQL.c_str(), NULL, 0, &errorMessage);
 }
 
-// method to get all the procedures from the database
-void Database::getProcedures(vector<string>& results){
+// method to insert a Constant into the database
+void Database::insertConstants(string constantName) {
+	string insertConstantsSQL = "INSERT INTO constants ('constantName') VALUES ('" + constantName + "');";
+	sqlite3_exec(dbConnection, insertConstantsSQL.c_str(), NULL, 0, &errorMessage);
+}
+
+// method to insert a Assignment into the database
+void Database::insertAssignments(string assignmentName) {
+	string insertAssignmentsSQL = "INSERT INTO assignments ('assignmentName') VALUES ('" + assignmentName + "');";
+	sqlite3_exec(dbConnection, insertAssignmentsSQL.c_str(), NULL, 0, &errorMessage);
+}
+
+// method to insert a Print into the database
+void Database::insertPrints(string printName) {
+	string insertPrintsSQL = "INSERT INTO prints ('printName') VALUES ('" + printName + "');";
+	sqlite3_exec(dbConnection, insertPrintsSQL.c_str(), NULL, 0, &errorMessage);
+}
+
+// method to insert a Read into the database
+void Database::insertReads(string readName) {
+	string insertReadsSQL = "INSERT INTO prints ('readName') VALUES ('" + readName + "');";
+	sqlite3_exec(dbConnection, insertReadsSQL.c_str(), NULL, 0, &errorMessage);
+}
+
+// method to insert a Statement into the database
+void Database::insertStmts(string stmtsName) {
+	string insertStmtsSQL = "INSERT INTO Stmts ('stmtsName') VALUES ('" + stmtsName + "');";
+	sqlite3_exec(dbConnection, insertStmtsSQL.c_str(), NULL, 0, &errorMessage);
+}
+
+
+
+// method to get all the Procedures from the database
+void Database::getProcedures(vector<string>& results) {
 	// clear the existing results
 	dbResults.clear();
 
@@ -90,6 +122,116 @@ void Database::getProcedures(vector<string>& results){
 		results.push_back(result);
 	}
 }
+
+// method to get all the Variable from the database
+void Database::getVariables(vector<string>& results) {
+	// clear the existing results
+	dbResults.clear();
+
+	// retrieve the Variables from the Variables table
+	// The callback method is only used when there are results to be returned.
+	string getVariablesSQL = "SELECT * FROM variables;";
+	sqlite3_exec(dbConnection, getVariablesSQL.c_str(), callback, 0, &errorMessage);
+
+	// postprocess the results from the database so that the output is just a vector of procedure names
+	for (vector<string> dbRow : dbResults) {
+		string result;
+		result = dbRow.at(0);
+		results.push_back(result);
+	}
+}
+
+// method to get all the Constants from the database
+void Database::getConstants(vector<string>& results) {
+	// clear the existing results
+	dbResults.clear();
+
+	// retrieve the Constants from the Constants table
+	// The callback method is only used when there are results to be returned.
+	string getConstantsSQL = "SELECT * FROM constants;";
+	sqlite3_exec(dbConnection, getConstantsSQL.c_str(), callback, 0, &errorMessage);
+
+	// postprocess the results from the database so that the output is just a vector of procedure names
+	for (vector<string> dbRow : dbResults) {
+		string result;
+		result = dbRow.at(0);
+		results.push_back(result);
+	}
+}
+
+
+// method to get all the Assignments from the database
+void Database::getAssignments(vector<string>& results) {
+	// clear the existing results
+	dbResults.clear();
+
+	// retrieve the Assignments from the Assignments table
+	// The callback method is only used when there are results to be returned.
+	string getAssignmentsSQL = "SELECT * FROM constants;";
+	sqlite3_exec(dbConnection, getAssignmentsSQL.c_str(), callback, 0, &errorMessage);
+
+	// postprocess the results from the database so that the output is just a vector of procedure names
+	for (vector<string> dbRow : dbResults) {
+		string result;
+		result = dbRow.at(0);
+		results.push_back(result);
+	}
+}
+
+// method to get all the Prints from the database
+void Database::getPrints(vector<string>& results) {
+	// clear the existing results
+	dbResults.clear();
+
+	// retrieve the Prints from the Prints table
+	// The callback method is only used when there are results to be returned.
+	string getPrintsSQL = "SELECT * FROM prints;";
+	sqlite3_exec(dbConnection, getPrintsSQL.c_str(), callback, 0, &errorMessage);
+
+	// postprocess the results from the database so that the output is just a vector of procedure names
+	for (vector<string> dbRow : dbResults) {
+		string result;
+		result = dbRow.at(0);
+		results.push_back(result);
+	}
+}
+
+// method to get all the Reads from the database
+void Database::getReads(vector<string>& results) {
+	// clear the existing results
+	dbResults.clear();
+
+	// retrieve the Reads from the Reads table
+	// The callback method is only used when there are results to be returned.
+	string getReadsSQL = "SELECT * FROM prints;";
+	sqlite3_exec(dbConnection, getReadsSQL.c_str(), callback, 0, &errorMessage);
+
+	// postprocess the results from the database so that the output is just a vector of procedure names
+	for (vector<string> dbRow : dbResults) {
+		string result;
+		result = dbRow.at(0);
+		results.push_back(result);
+	}
+}
+
+// method to get all the Statements from the database
+void Database::getStmts(vector<string>& results) {
+	// clear the existing results
+	dbResults.clear();
+
+	// retrieve the Statements from the Statements table
+	// The callback method is only used when there are results to be returned.
+	string getStmtsSQL = "SELECT * FROM prints;";
+	sqlite3_exec(dbConnection, getStmtsSQL.c_str(), callback, 0, &errorMessage);
+
+	// postprocess the results from the database so that the output is just a vector of procedure names
+	for (vector<string> dbRow : dbResults) {
+		string result;
+		result = dbRow.at(0);
+		results.push_back(result);
+	}
+}
+
 
 // callback method to put one row of results from the database into the dbResults vector
 // This method is called each time a row of results is returned from the database

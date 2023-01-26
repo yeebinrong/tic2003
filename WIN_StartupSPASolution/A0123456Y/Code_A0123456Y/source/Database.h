@@ -17,20 +17,55 @@ public:
 	static void close();
 
 	// method to insert a procedure into the database
-	static void insertProcedure(string procedureName);
+	static void insertProcedures(string procedureName);
 
 	// method to get all the procedures from the database
 	static void getProcedures(vector<string>& results);
 
+	// method to insert a variable into the database
+	static void insertVariables(string variableName);
+
+	// method to get all the variable from the database
+	static void getVariables(vector<string>& results);
+
+	// method to insert a Constant into the database
+	static void insertConstants(string constantName);
+
+	// method to get all the Constant from the database
+	static void getConstants(vector<string>& results);
+
+	// method to insert a Assignment into the database
+	static void insertAssignments(string assignmentName);
+
+	// method to get all the Assignment from the database
+	static void getAssignments(vector<string>& results);
+
+	// method to insert a Print into the database
+	static void insertPrints(string printName);
+
+	// method to get all the Print from the database
+	static void getPrints(vector<string>& results);
+
+	// method to insert a Read into the database
+	static void insertReads(string readName);
+
+	// method to get all the Read from the database
+	static void getReads(vector<string>& results);
+
+	// method to insert a Statement into the database
+	static void insertStmts(string stmtName);
+
+	// method to get all the Statement from the database
+	static void getStmts(vector<string>& results);
+
 private:
 	// the connection pointer to the database
-	static sqlite3* dbConnection; 
+	static sqlite3* dbConnection;
 	// a vector containing the results from the database
-	static vector<vector<string>> dbResults; 
+	static vector<vector<string>> dbResults;
 	// the error message from the database
 	static char* errorMessage;
 	// callback method to put one row of results from the database into the dbResults vector
 	// This method is called each time a row of results is returned from the database
 	static int callback(void* NotUsed, int argc, char** argv, char** azColName);
 };
-
