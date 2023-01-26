@@ -32,6 +32,24 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 	if (synonymType == "procedure") {
 		Database::getProcedures(databaseResults);
 	}
+	else if (synonymType == "variable") {
+		// Database::getVariables(databaseResults);
+	}
+	else if (synonymType == "constant") {
+		// Database::getConstants(databaseResults);
+	}
+	else if (synonymType == "assign") {
+		// Database::getAssigns(databaseResults);
+	}
+	else if (synonymType == "print") {
+		// Database::getPrints(databaseResults);
+	}
+	else if (synonymType == "read") {
+		// Database::getReads(databaseResults);
+	}
+	else if (synonymType == "stmt") {
+		// Database::getStmts(databaseResults);
+	}
 
 	// post process the results to fill in the output vector
 	for (string databaseResult : databaseResults) {

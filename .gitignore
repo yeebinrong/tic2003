@@ -48,3 +48,7 @@ Thumbs.db
 *.mov
 *.wmv
 
+.vs
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/SPA.tlog/
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/Debug/

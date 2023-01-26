@@ -12,10 +12,51 @@ void Database::initialize() {
 	// drop the existing procedure table (if any)
 	string dropProcedureTableSQL = "DROP TABLE IF EXISTS procedures";
 	sqlite3_exec(dbConnection, dropProcedureTableSQL.c_str(), NULL, 0, &errorMessage);
-
 	// create a procedure table
 	string createProcedureTableSQL = "CREATE TABLE procedures ( procedureName VARCHAR(255) PRIMARY KEY);";
 	sqlite3_exec(dbConnection, createProcedureTableSQL.c_str(), NULL, 0, &errorMessage);
+
+	// drop the existing variable table (if any)
+	string dropVariableTableSQL = "DROP TABLE IF EXISTS variables";
+	sqlite3_exec(dbConnection, dropVariableTableSQL.c_str(), NULL, 0, &errorMessage);
+	// create a variable table
+	string createVariableTableSQL = "CREATE TABLE variables ( variableName VARCHAR(255) PRIMARY KEY);";
+	sqlite3_exec(dbConnection, createVariableTableSQL.c_str(), NULL, 0, &errorMessage);
+
+	// drop the existing constant table (if any)
+	string dropConstantTableSQL = "DROP TABLE IF EXISTS constants";
+	sqlite3_exec(dbConnection, dropConstantTableSQL.c_str(), NULL, 0, &errorMessage);
+	// create a constant table
+	string createConstantTableSQL = "CREATE TABLE constants ( constantName VARCHAR(255) PRIMARY KEY);";
+	sqlite3_exec(dbConnection, createConstantTableSQL.c_str(), NULL, 0, &errorMessage);
+
+	// drop the existing assign table (if any)
+	string dropAssignTableSQL = "DROP TABLE IF EXISTS assigns";
+	sqlite3_exec(dbConnection, dropAssignTableSQL.c_str(), NULL, 0, &errorMessage);
+	// create a assign table
+	string createAssignTableSQL = "CREATE TABLE assigns ( assignName VARCHAR(255) PRIMARY KEY);";
+	sqlite3_exec(dbConnection, createAssignTableSQL.c_str(), NULL, 0, &errorMessage);
+
+	// drop the existing print table (if any)
+	string dropPrintTableSQL = "DROP TABLE IF EXISTS prints";
+	sqlite3_exec(dbConnection, dropPrintTableSQL.c_str(), NULL, 0, &errorMessage);
+	// create a print table
+	string createPrintTableSQL = "CREATE TABLE prints ( printName VARCHAR(255) PRIMARY KEY);";
+	sqlite3_exec(dbConnection, createPrintTableSQL.c_str(), NULL, 0, &errorMessage);
+
+	// drop the existing read table (if any)
+	string dropReadTableSQL = "DROP TABLE IF EXISTS reads";
+	sqlite3_exec(dbConnection, dropReadTableSQL.c_str(), NULL, 0, &errorMessage);
+	// create a read table
+	string createReadTableSQL = "CREATE TABLE reads ( readName VARCHAR(255) PRIMARY KEY);";
+	sqlite3_exec(dbConnection, createReadTableSQL.c_str(), NULL, 0, &errorMessage);
+
+	// drop the existing stmt table (if any)
+	string dropStmtTableSQL = "DROP TABLE IF EXISTS stmts";
+	sqlite3_exec(dbConnection, dropStmtTableSQL.c_str(), NULL, 0, &errorMessage);
+	// create a stmt table
+	string createStmtTableSQL = "CREATE TABLE stmts ( stmtName VARCHAR(255) PRIMARY KEY);";
+	sqlite3_exec(dbConnection, createStmtTableSQL.c_str(), NULL, 0, &errorMessage);
 
 	// initialize the result vector
 	dbResults = vector<vector<string>>();
