@@ -21,7 +21,32 @@ void SourceProcessor::process(string program) {
 	// insert the procedure into the database
 	Database::insertProcedure(procedureName);
 
-	for (string token : tokens) {
-		cout << token << endl;
+	// iterate subsequent statements for variable/constant
+	for (int i = 2; i < tokens.size(); i++) {
+		//for (string token : tokens) {
+		string tempToken = tokens.at(i);
+		string tempAssignToken = "";
+		if (tempToken != "}") {
+			if ((tempToken[0] > 96) && ((tokens.at(i + 1) == "="))) {		// =
+				Database::insertVariable(tempToken);
+				int x = i - 2;
+				while (tokens.at(x) != ";") {
+					tempAssignToken += tokens.at(x);
+					x++;
+				}
+				//Database::insertAssignment(tempAssignToken);
+			}
+			else if ((tempToken != "}") && (tokens.at(i - 1) == "read")) {
+				Database::insertVariable(tempToken);
+				//Database::insertAssignment(tokens.at(i - 1));
+				//Database::insertAssignment(tempToken);
+			}
+		}
+		else if ((tempToken >= "1") && (tempToken <= "9")) {	//constants
+			Database::insertConstant(tempToken);
+		}
+		
+
 	}
+
 }
