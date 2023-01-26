@@ -49,3 +49,20 @@ Thumbs.db
 *.wmv
 
 .vs
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.ilk
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.tlog/link.read.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/TestWrapper.obj
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/vc143.idb
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/vc143.pdb
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/database.db
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/Debug/AutoTester.pdb
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/Debug/SPA.idb
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/Debug/SPA.lib
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/Debug/SPA.pdb
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/Database.obj
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/QueryProcessor.obj
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/SPA.tlog/CL.command.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/SPA.tlog/CL.read.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/SPA.tlog/CL.write.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/SourceProcessor.obj
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/Tests/out.xml
