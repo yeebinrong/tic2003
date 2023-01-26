@@ -33,22 +33,22 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		Database::getProcedures(databaseResults);
 	}
 	else if (synonymType == "variable") {
-		// Database::getVariables(databaseResults);
+		Database::getVariables(databaseResults);
 	}
 	else if (synonymType == "constant") {
-		// Database::getConstants(databaseResults);
+		Database::getConstants(databaseResults);
 	}
 	else if (synonymType == "assign") {
-		// Database::getAssigns(databaseResults);
+		Database::getAssignments(databaseResults);
 	}
 	else if (synonymType == "print") {
-		// Database::getPrints(databaseResults);
+		Database::getPrints(databaseResults);
 	}
 	else if (synonymType == "read") {
-		// Database::getReads(databaseResults);
+		Database::getReads(databaseResults);
 	}
 	else if (synonymType == "stmt") {
-		// Database::getStmts(databaseResults);
+		Database::getStmts(databaseResults);
 	}
 
 	// post process the results to fill in the output vector
