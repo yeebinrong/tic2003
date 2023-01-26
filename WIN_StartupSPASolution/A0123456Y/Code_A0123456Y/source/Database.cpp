@@ -67,38 +67,44 @@ void Database::close() {
 	sqlite3_close(dbConnection);
 }
 
+void Database::insertProcedure(string procedureName)
+{
+	string insertProcedureSQL = "INSERT INTO procedures ('variableName') VALUES ('" + procedureName + "');";
+	sqlite3_exec(dbConnection, insertProcedureSQL.c_str(), NULL, 0, &errorMessage);
+}
+
 // method to insert a Variable into the database
-void Database::insertVariables(string variableName) {
+void Database::insertVariable(string variableName) {
 	string insertVariablesSQL = "INSERT INTO variables ('variableName') VALUES ('" + variableName + "');";
 	sqlite3_exec(dbConnection, insertVariablesSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 // method to insert a Constant into the database
-void Database::insertConstants(string constantName) {
+void Database::insertConstant(string constantName) {
 	string insertConstantsSQL = "INSERT INTO constants ('constantName') VALUES ('" + constantName + "');";
 	sqlite3_exec(dbConnection, insertConstantsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 // method to insert a Assignment into the database
-void Database::insertAssignments(string assignmentName) {
+void Database::insertAssignment(string assignmentName) {
 	string insertAssignmentsSQL = "INSERT INTO assignments ('assignmentName') VALUES ('" + assignmentName + "');";
 	sqlite3_exec(dbConnection, insertAssignmentsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 // method to insert a Print into the database
-void Database::insertPrints(string printName) {
+void Database::insertPrint(string printName) {
 	string insertPrintsSQL = "INSERT INTO prints ('printName') VALUES ('" + printName + "');";
 	sqlite3_exec(dbConnection, insertPrintsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 // method to insert a Read into the database
-void Database::insertReads(string readName) {
+void Database::insertRead(string readName) {
 	string insertReadsSQL = "INSERT INTO prints ('readName') VALUES ('" + readName + "');";
 	sqlite3_exec(dbConnection, insertReadsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 // method to insert a Statement into the database
-void Database::insertStmts(string stmtsName) {
+void Database::insertStmt(string stmtsName) {
 	string insertStmtsSQL = "INSERT INTO Stmts ('stmtsName') VALUES ('" + stmtsName + "');";
 	sqlite3_exec(dbConnection, insertStmtsSQL.c_str(), NULL, 0, &errorMessage);
 }

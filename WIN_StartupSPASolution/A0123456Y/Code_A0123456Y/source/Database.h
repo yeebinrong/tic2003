@@ -17,43 +17,43 @@ public:
 	static void close();
 
 	// method to insert a procedure into the database
-	static void insertProcedures(string procedureName);
+	static void insertProcedure(string procedureName);
 
 	// method to get all the procedures from the database
 	static void getProcedures(vector<string>& results);
 
 	// method to insert a variable into the database
-	static void insertVariables(string variableName);
+	static void insertVariable(string variableName);
 
 	// method to get all the variable from the database
 	static void getVariables(vector<string>& results);
 
 	// method to insert a Constant into the database
-	static void insertConstants(string constantName);
+	static void insertConstant(string constantName);
 
 	// method to get all the Constant from the database
 	static void getConstants(vector<string>& results);
 
 	// method to insert a Assignment into the database
-	static void insertAssignments(string assignmentName);
+	static void insertAssignment(string assignmentName);
 
 	// method to get all the Assignment from the database
 	static void getAssignments(vector<string>& results);
 
 	// method to insert a Print into the database
-	static void insertPrints(string printName);
+	static void insertPrint(string printName);
 
 	// method to get all the Print from the database
 	static void getPrints(vector<string>& results);
 
 	// method to insert a Read into the database
-	static void insertReads(string readName);
+	static void insertRead(string readName);
 
 	// method to get all the Read from the database
 	static void getReads(vector<string>& results);
 
 	// method to insert a Statement into the database
-	static void insertStmts(string stmtName);
+	static void insertStmt(string stmtName);
 
 	// method to get all the Statement from the database
 	static void getStmts(vector<string>& results);
