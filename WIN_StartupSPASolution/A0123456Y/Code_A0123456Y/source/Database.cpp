@@ -69,7 +69,7 @@ void Database::close() {
 
 void Database::insertProcedure(string procedureName)
 {
-	string insertProcedureSQL = "INSERT INTO procedures ('variableName') VALUES ('" + procedureName + "');";
+	string insertProcedureSQL = "INSERT INTO procedures ('procedureName') VALUES ('" + procedureName + "');";
 	sqlite3_exec(dbConnection, insertProcedureSQL.c_str(), NULL, 0, &errorMessage);
 }
 

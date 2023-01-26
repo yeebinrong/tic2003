@@ -1,4 +1,5 @@
 #include "SourceProcessor.h"
+#include <iostream>
 
 // method for processing the source program
 // This method currently only inserts the procedure name into the database
@@ -19,4 +20,8 @@ void SourceProcessor::process(string program) {
 
 	// insert the procedure into the database
 	Database::insertProcedure(procedureName);
+
+	for (string token : tokens) {
+		cout << token << endl;
+	}
 }
