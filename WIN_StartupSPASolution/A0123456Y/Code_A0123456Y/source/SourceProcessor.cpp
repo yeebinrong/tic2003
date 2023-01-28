@@ -45,7 +45,7 @@ void SourceProcessor::process(string program) {
 				Database::insertVariable(tempToken);
 				Database::insertPrint(to_string(stmtNum));
 			}
-			else if (isdigit(tempToken[0]) && isdigit(tempToken[0])) {
+			else if (isdigit(tempToken[0])) {
 				Database::insertConstant(tempToken);
 			}
 		}
