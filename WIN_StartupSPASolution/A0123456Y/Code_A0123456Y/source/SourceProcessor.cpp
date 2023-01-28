@@ -23,7 +23,6 @@ void SourceProcessor::process(string program) {
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
 		string tempToken = tokens.at(i);
-		cout << tempToken << endl;
 		
 		if (((tokens.at(i - 1) == "{") || (tokens.at(i - 1) == ";" || (tokens.at(i - 1) == "}")))
 				&& (tempToken != "}") && (tempToken != "else")) {
