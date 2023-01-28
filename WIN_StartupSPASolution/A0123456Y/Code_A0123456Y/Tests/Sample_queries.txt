@@ -1,22 +1,22 @@
 1 - Procedure
 procedure p;
 Select p
-echo
+computeCentroid
 5000
 2 - Variable
 variable v;
 Select v
-num1, index
+count, cenX, cenY, flag, normSq
 5000
 3 - Constant
 constant c;
 Select c
-none
+0, 1
 5000
 4 - Assignment
 assign a;
 Select a
-2
+1, 2, 3, 6, 7, 8, 11, 12, 13, 14
 5000
 5 - Print
 print pr;

@@ -86,8 +86,8 @@ void Database::insertConstant(string name) {
 }
 
 // method to insert a Assignment into the database
-void Database::insertAssignment(string name) {
-	string insertAssignmentsSQL = "INSERT INTO assignments ('name') VALUES ('" + name + "');";
+void Database::insertAssignment(string stmt) {
+	string insertAssignmentsSQL = "INSERT INTO assigns ('name') VALUES ('" + stmt + "');";
 	sqlite3_exec(dbConnection, insertAssignmentsSQL.c_str(), NULL, 0, &errorMessage);
 }
 

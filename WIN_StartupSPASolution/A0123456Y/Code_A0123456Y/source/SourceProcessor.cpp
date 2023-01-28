@@ -17,11 +17,32 @@ void SourceProcessor::process(string program) {
 	// This logic is highly simplified based on iteration 1 requirements and 
 	// the assumption that the programs are valid.
 	string procedureName = tokens.at(1);
-
 	// insert the procedure into the database
 	Database::insertProcedure(procedureName);
+	int stmtNum = 0;
+	// iterate subsequent statements for variable/constant
+	for (int i = 2; i < tokens.size(); i++) {
+		//for (string token : tokens) {
+		string tempToken = tokens.at(i);
+		if (tempToken != "}") {
+			if ((tempToken[0] > 96) && ((tokens.at(i + 1) == "=") || (tokens.at(i - 1) == "read"))) {		// =
+				Database::insertVariable(tempToken);
+			}
+			else if (tempToken[0] >= 48 && tempToken[0] <= 57) {	//constants
+				Database::insertConstant(tempToken);
+			}
+		}
+		
+		if (((tokens.at(i - 1) == "{") || (tokens.at(i - 1) == ";" || (tokens.at(i - 1) == "}")))
+				&& (tempToken != "}") && (tempToken != "else")) {
+			stmtNum++;
+			if (tokens.at(i + 1) == "=") {
+				Database::insertAssignment(to_string(stmtNum));
+				//Database::insertAssignment(tempToken);
+			}
+		}
+		
 
-	for (string token : tokens) {
-		cout << token << endl;
 	}
-}
+
+}		

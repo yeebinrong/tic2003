@@ -49,6 +49,16 @@ Thumbs.db
 *.wmv
 
 .vs
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.exe.recipe
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.tlog/AutoTester.lastbuildstate
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.tlog/CL.command.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.tlog/CL.read.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.tlog/CL.write.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.tlog/link.write.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/SPA.tlog/Lib-link.read.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/SPA.tlog/Lib-link.write.1.tlog
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/SPA.tlog/SPA.lastbuildstate
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/SPA/Debug/sqlite3.obj
 WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.ilk
 WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/AutoTester.tlog/link.read.1.tlog
 WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Debug/TestWrapper.obj
