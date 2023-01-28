@@ -1,5 +1,4 @@
 procedure computeCentroid {
-    read num1;
     count = 0;
     cenX = 0;
     cenY = 0;
@@ -10,12 +9,11 @@ procedure computeCentroid {
             cenY = cenY + y;
             call readPoint;
         }
-    if (count < 1) then {
-       flag = 1;
-    } else {
-    cenX = cenX / count;
-    cenY = cenY / count;
+   if (count < 1) then {
+      flag = 1;
+   } else {
+   cenX = cenX / count;
+   cenY = cenY / count;
     }
     normSq = cenX * cenX + cenY * cenY;
-    print index;
 }
