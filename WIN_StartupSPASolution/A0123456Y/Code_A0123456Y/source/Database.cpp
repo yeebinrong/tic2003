@@ -27,35 +27,35 @@ void Database::initialize() {
 	string dropConstantTableSQL = "DROP TABLE IF EXISTS constants";
 	sqlite3_exec(dbConnection, dropConstantTableSQL.c_str(), NULL, 0, &errorMessage);
 	// create a constant table
-	string createConstantTableSQL = "CREATE TABLE constants ( name VARCHAR(255) PRIMARY KEY);";
+	string createConstantTableSQL = "CREATE TABLE constants ( value VARCHAR(255) PRIMARY KEY);";
 	sqlite3_exec(dbConnection, createConstantTableSQL.c_str(), NULL, 0, &errorMessage);
 
 	// drop the existing assign table (if any)
 	string dropAssignTableSQL = "DROP TABLE IF EXISTS assigns";
 	sqlite3_exec(dbConnection, dropAssignTableSQL.c_str(), NULL, 0, &errorMessage);
 	// create a assign table
-	string createAssignTableSQL = "CREATE TABLE assigns ( name VARCHAR(255) PRIMARY KEY);";
+	string createAssignTableSQL = "CREATE TABLE assigns ( stmtNo VARCHAR(255) PRIMARY KEY);";
 	sqlite3_exec(dbConnection, createAssignTableSQL.c_str(), NULL, 0, &errorMessage);
 
 	// drop the existing print table (if any)
 	string dropPrintTableSQL = "DROP TABLE IF EXISTS prints";
 	sqlite3_exec(dbConnection, dropPrintTableSQL.c_str(), NULL, 0, &errorMessage);
 	// create a print table
-	string createPrintTableSQL = "CREATE TABLE prints ( name VARCHAR(255) PRIMARY KEY);";
+	string createPrintTableSQL = "CREATE TABLE prints ( stmtNo VARCHAR(255) PRIMARY KEY);";
 	sqlite3_exec(dbConnection, createPrintTableSQL.c_str(), NULL, 0, &errorMessage);
 
 	// drop the existing read table (if any)
 	string dropReadTableSQL = "DROP TABLE IF EXISTS reads";
 	sqlite3_exec(dbConnection, dropReadTableSQL.c_str(), NULL, 0, &errorMessage);
 	// create a read table
-	string createReadTableSQL = "CREATE TABLE reads ( name VARCHAR(255) PRIMARY KEY);";
+	string createReadTableSQL = "CREATE TABLE reads ( stmtNo VARCHAR(255) PRIMARY KEY);";
 	sqlite3_exec(dbConnection, createReadTableSQL.c_str(), NULL, 0, &errorMessage);
 
 	// drop the existing stmt table (if any)
 	string dropStmtTableSQL = "DROP TABLE IF EXISTS stmts";
 	sqlite3_exec(dbConnection, dropStmtTableSQL.c_str(), NULL, 0, &errorMessage);
 	// create a stmt table
-	string createStmtTableSQL = "CREATE TABLE stmts ( name VARCHAR(255) PRIMARY KEY);";
+	string createStmtTableSQL = "CREATE TABLE stmts ( stmtNo VARCHAR(255) PRIMARY KEY);";
 	sqlite3_exec(dbConnection, createStmtTableSQL.c_str(), NULL, 0, &errorMessage);
 
 	// initialize the result vector
@@ -80,32 +80,32 @@ void Database::insertVariable(string name) {
 }
 
 // method to insert a Constant into the database
-void Database::insertConstant(string name) {
-	string insertConstantsSQL = "INSERT INTO constants ('name') VALUES ('" + name + "');";
+void Database::insertConstant(string value) {
+	string insertConstantsSQL = "INSERT INTO constants ('value') VALUES ('" + value + "');";
 	sqlite3_exec(dbConnection, insertConstantsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 // method to insert a Assignment into the database
-void Database::insertAssignment(string stmt) {
-	string insertAssignmentsSQL = "INSERT INTO assigns ('name') VALUES ('" + stmt + "');";
+void Database::insertAssignment(string stmtNo) {
+	string insertAssignmentsSQL = "INSERT INTO assigns ('stmtNo') VALUES ('" + stmtNo + "');";
 	sqlite3_exec(dbConnection, insertAssignmentsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 // method to insert a Print into the database
-void Database::insertPrint(string name) {
-	string insertPrintsSQL = "INSERT INTO prints ('name') VALUES ('" + name + "');";
+void Database::insertPrint(string stmtNo) {
+	string insertPrintsSQL = "INSERT INTO prints ('stmtNo') VALUES ('" + stmtNo + "');";
 	sqlite3_exec(dbConnection, insertPrintsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 // method to insert a Read into the database
-void Database::insertRead(string name) {
-	string insertReadsSQL = "INSERT INTO prints ('name') VALUES ('" + name + "');";
+void Database::insertRead(string stmtNo) {
+	string insertReadsSQL = "INSERT INTO reads ('stmtNo') VALUES ('" + stmtNo + "');";
 	sqlite3_exec(dbConnection, insertReadsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 // method to insert a Statement into the database
-void Database::insertStmt(string name) {
-	string insertStmtsSQL = "INSERT INTO Stmts ('name') VALUES ('" + name + "');";
+void Database::insertStmt(string stmtNo) {
+	string insertStmtsSQL = "INSERT INTO Stmts ('stmtNo') VALUES ('" + stmtNo + "');";
 	sqlite3_exec(dbConnection, insertStmtsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
