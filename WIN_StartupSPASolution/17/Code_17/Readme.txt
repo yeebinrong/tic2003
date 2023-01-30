@@ -8,7 +8,8 @@ How to compile the SPA?
 1. Open the StartupSPASolution.sln with Visual Studio 2022
 2. Right Click AutoTester solution and click "Set as Startup Project"
 3. Ensure that build configuration is set to "Release" else the AutoTester.exe will not be created in the correct location
-4. Under the top bar, click Build > Build full program database file for solution
+4. Ensure that configuration is under Win32 and not x64, else the build may fail
+5. Under the top bar, click Build > Build full program database file for solution
 
 The AutoTester.exe will be create in 17/Code_17/Release/AutoTester.exe
 
