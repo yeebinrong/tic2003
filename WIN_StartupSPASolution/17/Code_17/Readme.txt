@@ -1,8 +1,8 @@
 Visual Studio version: Visual Studio 2022 Community Edition
-Path to solution: Code_17/StartupSPASolution.sln
-Path to AutoTester: Code_17/Release/AutoTester.exe
-Path to source txt: Code_17/Tests/Sample_source.txt
-Path to queries txt: Code_17/Tests/Sample_queries.txt
+Path to solution: 17/Code_17/StartupSPASolution.sln
+Path to AutoTester: 17/Code_17/Release/AutoTester.exe
+Path to source txt: 17/Tests_17/Sample_source.txt
+Path to queries txt: 17Tests_17/Sample_queries.txt
 
 How to compile the SPA?
 1. Open the StartupSPASolution.sln with Visual Studio 2022
@@ -15,4 +15,4 @@ The AutoTester.exe will be create in Code_A0123456Y/Release/AutoTester.exe
 How to run the AutoTester?
 1. Open a command prompt and navigate to Code_A0123456Y/Release
 2. Execute the following command in the command prompt
-3. AutoTester.exe  ..\Tests\Sample_source.txt ..\Tests\Sample_queries.txt ..\Tests\out.xml
+3. AutoTester.exe  ..\..\Tests_17\Sample_source.txt ..\..\Tests_17\Sample_queries.txt ..\..\Tests_17\out.xml
