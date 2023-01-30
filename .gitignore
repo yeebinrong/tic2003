@@ -56,6 +56,9 @@ WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/Tests/output.xml
 WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/Tests/out.xml
 WIN_StartupSPASolution/A0123456Y/Tests_A0123456Y/out.xml
 WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/UnitTesting/x64/Debug
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/UnitTesting/Debug
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/UnitTesting/x64/Release
+WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/UnitTesting/Release
 WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/x64/Debug
 WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/AutoTester/Release
 WIN_StartupSPASolution/A0123456Y/Code_A0123456Y/Release
