@@ -10,9 +10,9 @@ How to compile the SPA?
 3. Ensure that build configuration is set to "Release" else the AutoTester.exe will not be created in the correct location
 4. Under the top bar, click Build > Build full program database file for solution
 
-The AutoTester.exe will be create in Code_A0123456Y/Release/AutoTester.exe
+The AutoTester.exe will be create in 17/Code_17/Release/AutoTester.exe
 
 How to run the AutoTester?
-1. Open a command prompt and navigate to Code_A0123456Y/Release
+1. Open a command prompt and navigate to 17/Code_17/Release
 2. Execute the following command in the command prompt
 3. AutoTester.exe  ..\..\Tests_17\Sample_source.txt ..\..\Tests_17\Sample_queries.txt ..\..\Tests_17\out.xml
