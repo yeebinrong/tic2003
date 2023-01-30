@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments> ..\Tests\Sample_source.txt ..\Tests\Sample_queries.txt ..\Tests\output.xml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>..\..\Tests_17\Sample_source.txt ..\..\Tests_17\Sample_queries.txt ..\..\Tests_17\out.xml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
