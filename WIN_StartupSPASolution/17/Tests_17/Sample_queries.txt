@@ -6,7 +6,7 @@ computeCentroid
 2 - Variable
 variable v;
 Select v
-count, cenX, cenY, flag, normSq
+num1, count, cenX, cenY, flag, normSq, index
 5000
 3 - Constant
 constant c;
@@ -16,12 +16,12 @@ Select c
 4 - Assignment
 assign a;
 Select a
-1, 2, 3, 6, 7, 8, 11, 12, 13, 14
+2, 3, 4, 7, 8, 9, 12, 13, 14, 15
 5000
 5 - Print
 print pr;
 Select pr
-3, 4
+16
 5000
 6 - Read
 read rd;
@@ -31,5 +31,5 @@ Select rd
 7 - Statement
 stmt s;
 Select s
-1, 2, 3, 4
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
 5000
