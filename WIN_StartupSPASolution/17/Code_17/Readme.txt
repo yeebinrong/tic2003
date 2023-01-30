@@ -17,3 +17,7 @@ How to run the AutoTester?
 1. Open a command prompt and navigate to 17/Code_17/Release
 2. Execute the following command in the command prompt
 3. AutoTester.exe  ..\..\Tests_17\Sample_source.txt ..\..\Tests_17\Sample_queries.txt ..\..\Tests_17\out.xml
+
+or
+
+1. Click on "Local Windows Debugger" in Visual Studio 2022
