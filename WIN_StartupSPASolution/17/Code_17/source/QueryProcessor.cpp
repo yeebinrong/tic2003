@@ -50,6 +50,9 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 	else if (synonymType == "stmt") {
 		Database::getStmts(databaseResults);
 	}
+	else if (synonymType == "next") {
+		Database::getNexts(databaseResults);
+	}
 
 	// post process the results to fill in the output vector
 	for (string databaseResult : databaseResults) {

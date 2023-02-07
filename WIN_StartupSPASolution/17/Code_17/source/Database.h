@@ -58,6 +58,18 @@ public:
 	// method to get all the Statement from the database
 	static void getStmts(vector<string>& results);
 
+	// method to insert a Next into the database
+	static void insertNext(string stmtNo, string nextStmtNo, string direct);
+
+	// method to get all the Nexts from the database
+	static void getNexts(vector<string>& results);
+
+		// method to insert a Parent into the database
+	static void insertParent(string stmtNo, string childStmtNo, string direct );
+
+	// method to get all the Parents from the database
+	static void getParents(vector<string>& results);
+
 private:
 	// the connection pointer to the database
 	static sqlite3* dbConnection;

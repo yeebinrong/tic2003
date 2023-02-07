@@ -58,6 +58,21 @@ void Database::initialize() {
 	string createStmtTableSQL = "CREATE TABLE stmts ( stmtNo VARCHAR(255) PRIMARY KEY);";
 	sqlite3_exec(dbConnection, createStmtTableSQL.c_str(), NULL, 0, &errorMessage);
 
+	// drop the existing next table (if any)
+	string dropNextTableSQL = "DROP TABLE IF EXISTS nexts";
+	sqlite3_exec(dbConnection, dropNextTableSQL.c_str(), NULL, 0, &errorMessage);
+	// create a next table
+	string createNextTableSQL = "CREATE TABLE nexts ( stmtNo VARCHAR(255), nextStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, nextStmtNo));";
+	sqlite3_exec(dbConnection, createNextTableSQL.c_str(), NULL, 0, &errorMessage);
+
+	// drop the existing parent table (if any)
+	string dropParentTableSQL = "DROP TABLE IF EXISTS parents";
+	sqlite3_exec(dbConnection, dropParentTableSQL.c_str(), NULL, 0, &errorMessage);
+	// create a parent table
+	string createParentTableSQL = "CREATE TABLE parents ( stmtNo VARCHAR(255), childStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, childStmtNo));";
+	sqlite3_exec(dbConnection, createParentTableSQL.c_str(), NULL, 0, &errorMessage);
+
+
 	// initialize the result vector
 	dbResults = vector<vector<string>>();
 }
@@ -105,7 +120,13 @@ void Database::insertRead(string stmtNo) {
 
 // method to insert a Statement into the database
 void Database::insertStmt(string stmtNo) {
-	string insertStmtsSQL = "INSERT INTO Stmts ('stmtNo') VALUES ('" + stmtNo + "');";
+	string insertStmtsSQL = "INSERT INTO stmts ('stmtNo') VALUES ('" + stmtNo + "');";
+	sqlite3_exec(dbConnection, insertStmtsSQL.c_str(), NULL, 0, &errorMessage);
+}
+
+// method to insert a Next into the database
+void Database::insertNext(string stmtNo, string nextStmtNo, string direct) {
+	string insertStmtsSQL = "INSERT INTO nexts VALUES ('" + stmtNo + "' , '" + nextStmtNo + "', '" + direct + "');";
 	sqlite3_exec(dbConnection, insertStmtsSQL.c_str(), NULL, 0, &errorMessage);
 }
 
@@ -229,6 +250,23 @@ void Database::getStmts(vector<string>& results) {
 	// The callback method is only used when there are results to be returned.
 	string getStmtsSQL = "SELECT * FROM stmts;";
 	sqlite3_exec(dbConnection, getStmtsSQL.c_str(), callback, 0, &errorMessage);
+
+	// postprocess the results from the database so that the output is just a vector of procedure names
+	for (vector<string> dbRow : dbResults) {
+		string result;
+		result = dbRow.at(0);
+		results.push_back(result);
+	}
+}
+
+void Database::getNexts(vector<string>& results) {
+	// clear the existing results
+	dbResults.clear();
+
+	// retrieve the Nexts from the nexts table
+	// The callback method is only used when there are results to be returned.
+	string getNextsSQL = "SELECT * FROM nexts;";
+	sqlite3_exec(dbConnection, getNextsSQL.c_str(), callback, 0, &errorMessage);
 
 	// postprocess the results from the database so that the output is just a vector of procedure names
 	for (vector<string> dbRow : dbResults) {
