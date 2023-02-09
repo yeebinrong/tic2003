@@ -10,6 +10,12 @@ using namespace std;
 // It is advisable to just add the insert / get functions based on the given examples.
 class Database {
 public:
+	// method to execute a query
+	static void executeQuery(string query);
+
+	// method to execute a query and map the database results
+	static void executeQueryAndMapResults(vector<string>& results, string query);
+
 	// method to connect to the database and initialize tables in the database
 	static void initialize();
 
