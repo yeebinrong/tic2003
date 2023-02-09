@@ -40,19 +40,23 @@ void SourceProcessor::process(string program) {
 				Database::insertStmt(to_string(stmtNum));
 				
 				//Handle Next Insert
-				if (prevStmtNum && curState != "else" ) {
+				if (prevStmtNum && curState != "skip" ) {
 					Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
-					//TODO - logic to delete rows in indirect next
+					//TODO - handle next*
+					if (curState != "main") {
+						Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
+					}
 				}
-				else if (curState == "else") {
-					prevState = "else";
-					curState = "normal";
+				else if (curState == "skip") { //Handle when transiting to else
+					curState = "else";
+					Database::insertNext(to_string(containerStmtNum), to_string(stmtNum), "1");
+					Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
 				}
+
 
 				//Handle container (if/while)
 				if (tempToken == "if" || tempToken == "while" ) {
 					containerStmtNum = stmtNum;
-					prevState = curState;
 					curState = tempToken;
 				}
 
@@ -65,15 +69,13 @@ void SourceProcessor::process(string program) {
 				if (curState == "while") {
 					Database::insertNext(to_string(stmtNum), to_string(containerStmtNum), "1"); //while loop
 					Database::insertNext(to_string(containerStmtNum), to_string(stmtNum+1), "1"); //out of while-loop
-					curState = "normal";
+					curState = "main";
 				}
 				else if (curState == "if") {
-					containerStmtNum = stmtNum;
-					curState = "else";
+					curState = "skip";
 				}
-				else if (prevState == "else") {
-					prevState = "normal";
-					Database::insertNext(to_string(containerStmtNum), to_string(stmtNum+1), "1");
+				else if (curState == "else") {
+					curState = "main";
 				}
 		}
 		else if (tempToken != "}") {

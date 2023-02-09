@@ -126,8 +126,14 @@ void Database::insertStmt(string stmtNo) {
 
 // method to insert a Next into the database
 void Database::insertNext(string stmtNo, string nextStmtNo, string direct) {
-	string insertStmtsSQL = "INSERT INTO nexts VALUES ('" + stmtNo + "' , '" + nextStmtNo + "', '" + direct + "');";
-	sqlite3_exec(dbConnection, insertStmtsSQL.c_str(), NULL, 0, &errorMessage);
+	string insertNextsSQL = "INSERT INTO nexts VALUES ('" + stmtNo + "' , '" + nextStmtNo + "', '" + direct + "');";
+	sqlite3_exec(dbConnection, insertNextsSQL.c_str(), NULL, 0, &errorMessage);
+}
+
+// method to insert a Parent into the database
+void Database::insertParent(string stmtNo, string childStmtNo, string direct) {
+	string insertParentSQL = "INSERT INTO parents VALUES ('" + stmtNo + "' , '" + childStmtNo + "', '" + direct + "');";
+	sqlite3_exec(dbConnection, insertParentSQL.c_str(), NULL, 0, &errorMessage);
 }
 
 
