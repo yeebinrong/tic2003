@@ -7,7 +7,7 @@ bool isValInVect(vector<string> vector, string value) {
 }
 
 // method to insert variable and constants from expr
-void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset) {
+void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset, int stmtNum, string procedureName) {
 	int offset = initialOffset;
 	string offsetToken = tokens.at(currIdx + offset);
 	while (!isValInVect(loopCondition, offsetToken)) {
@@ -15,6 +15,10 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 		if (!isValInVect({ "(", ")", ">", "<", "+", "-", "*", "/", "%" }, offsetToken)) {
 			if (isalpha(offsetToken[0])) {
 				Database::insertVariable(offsetToken);
+				if (offset == 2) {
+					// if it is an assignment
+					Database::insertUses(to_string(stmtNum), procedureName, offsetToken);
+				}
 			}
 			else if (isdigit(offsetToken[0])) {
 				Database::insertConstant(offsetToken);
@@ -49,42 +53,48 @@ void SourceProcessor::process(string program) {
 	for (size_t i = 2; i < tokens.size(); i++) {
 		string prevToken = tokens.at(i - 1);
 		string currToken = tokens.at(i);
-		cout << currToken << endl;
 		if (isValInVect({"{", ";", "}"}, prevToken) &&
 			!isValInVect({"}", "else"}, currToken)
 		) {
 			stmtNum++;
 			Database::insertStmt(to_string(stmtNum));
-			if (tokens.at(i + 1) == "=") {
-				Database::insertAssignment(to_string(stmtNum));
-			}
 		}
+
 		if (isValInVect({ "{", "then", ";"}, currToken)) {
 			isInExpr = false;
 		}
 		else if (isInExpr) {
-			// move to next loop till end of expr
+			// move to next iteration till end of expr
 			continue;
 		}
+
 		if (isValInVect({"while", "if"}, currToken)) {
 			isInExpr = true;
-			insertExpr({ "{", "then", ";" }, tokens, i, 1);
+			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName);
 		}
 		// ensure not out of bounds
 		else if (currToken != "}") {
 			if (isalpha(currToken[0]) && tokens.at(i + 1) == "=") {
 				isInExpr = true;
 				Database::insertVariable(currToken);
+				Database::insertAssignment(to_string(stmtNum));
+				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
 				// offset two to skip equal sign
-				insertExpr({ ";" }, tokens, i, 2);
+				insertExpr({ ";" }, tokens, i, 2, stmtNum, procedureName);
 			}
 			else if (prevToken == "read") {
 				Database::insertVariable(currToken);
 				Database::insertRead(to_string(stmtNum));
+				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
 			}
 			else if (prevToken == "print") {
 				Database::insertVariable(currToken);
 				Database::insertPrint(to_string(stmtNum));
+				Database::insertUses(to_string(stmtNum), procedureName, currToken);
+			}
+			else if (prevToken == "call") {
+				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
+				Database::insertUses(to_string(stmtNum), procedureName, currToken);
 			}
 		}
 	}
