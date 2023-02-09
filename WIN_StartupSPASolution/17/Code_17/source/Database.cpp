@@ -13,49 +13,40 @@ void Database::initialize() {
 	// open a database connection and store the pointer into dbConnection
 	sqlite3_open("database.db", &dbConnection);
 
-	// drop the existing procedure table (if any)
+	// drop/create the existing procedure table (if any)
 	executeQuery("DROP TABLE IF EXISTS procedures");
-	// create a procedure table
 	executeQuery("CREATE TABLE procedures ( name VARCHAR(255) PRIMARY KEY);");
 
-	// drop the existing variable table (if any)
+	// drop/create the existing variable table (if any)
 	executeQuery("DROP TABLE IF EXISTS variables");
-	// create a variable table
 	executeQuery("CREATE TABLE variables ( name VARCHAR(255) PRIMARY KEY);");
 
-	// drop the existing constant table (if any)
+	// drop/create the existing constant table (if any)
 	executeQuery("DROP TABLE IF EXISTS constants");
-	// create a constant table
 	executeQuery("CREATE TABLE constants ( value VARCHAR(255) PRIMARY KEY);");
 
-	// drop the existing assign table (if any)
+	// drop/create the existing assign table (if any)
 	executeQuery("DROP TABLE IF EXISTS assigns");
-	// create a assign table
 	executeQuery("CREATE TABLE assigns ( stmtNo VARCHAR(255) PRIMARY KEY);");
 
-	// drop the existing print table (if any)
+	// drop/create the existing print table (if any)
 	executeQuery("DROP TABLE IF EXISTS prints");
-	// create a print table
 	executeQuery("CREATE TABLE prints ( stmtNo VARCHAR(255) PRIMARY KEY);");
 
-	// drop the existing read table (if any)
+	// drop/create the existing read table (if any)
 	executeQuery("DROP TABLE IF EXISTS reads");
-	// create a read table
 	executeQuery("CREATE TABLE reads ( stmtNo VARCHAR(255) PRIMARY KEY);");
 
-	// drop the existing stmt table (if any)
+	// drop/create the existing stmt table (if any)
 	executeQuery("DROP TABLE IF EXISTS stmts");
-	// create a stmt table
 	executeQuery("CREATE TABLE stmts ( stmtNo VARCHAR(255) PRIMARY KEY);");
 
-	// drop the existing modifies table (if any)
+	// drop/create the existing modifies table (if any)
 	executeQuery("DROP TABLE IF EXISTS modifies");
-	// create a modifies table
 	executeQuery("CREATE TABLE modifies ( stmtNo VARCHAR(255), procedureName VARCHAR(255), target VARCHAR(255) PRIMARY KEY (stmtNo, procedureName, target))");
 
-	// drop the existing uses table (if any)
+	// drop/create the existing uses table (if any)
 	executeQuery("DROP TABLE IF EXISTS uses");
-	// create a uses table
 	executeQuery("CREATE TABLE uses ( stmtNo VARCHAR(255), procedureName VARCHAR(255), target VARCHAR(255) PRIMARY KEY (stmtNo, procedureName, target))");
 
 	// initialize the result vector
