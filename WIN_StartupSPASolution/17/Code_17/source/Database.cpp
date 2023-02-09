@@ -117,28 +117,28 @@ void Database::getVariables(vector<string>& results) {
 
 // method to get all the Constants from the database
 void Database::getConstants(vector<string>& results) {
-	executeQueryAndMapResults(results, "SELECT name FROM constants;");
+	executeQueryAndMapResults(results, "SELECT value FROM constants;");
 }
 
 
 // method to get all the Assignments from the database
 void Database::getAssignments(vector<string>& results) {
-	executeQueryAndMapResults(results, "SELECT name FROM assigns;");
+	executeQueryAndMapResults(results, "SELECT stmtNo FROM assigns;");
 }
 
 // method to get all the Prints from the database
 void Database::getPrints(vector<string>& results) {
-	executeQueryAndMapResults(results, "SELECT name FROM prints;");
+	executeQueryAndMapResults(results, "SELECT stmtNo FROM prints;");
 }
 
 // method to get all the Reads from the database
 void Database::getReads(vector<string>& results) {
-	executeQueryAndMapResults(results, "SELECT name FROM reads;");
+	executeQueryAndMapResults(results, "SELECT stmtNo FROM reads;");
 }
 
 // method to get all the Statements from the database
 void Database::getStmts(vector<string>& results) {
-	executeQueryAndMapResults(results, "SELECT name FROM stmts;");
+	executeQueryAndMapResults(results, "SELECT stmtNo FROM stmts;");
 }
 
 // callback method to put one row of results from the database into the dbResults vector
