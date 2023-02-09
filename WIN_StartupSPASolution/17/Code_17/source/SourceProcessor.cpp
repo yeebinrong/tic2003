@@ -93,8 +93,9 @@ void SourceProcessor::process(string program) {
 				Database::insertUses(to_string(stmtNum), procedureName, currToken);
 			}
 			else if (prevToken == "call") {
-				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
-				Database::insertUses(to_string(stmtNum), procedureName, currToken);
+				// use calls table instead?
+				//Database::insertModifies(to_string(stmtNum), procedureName, currToken);
+				//Database::insertUses(to_string(stmtNum), procedureName, currToken);
 			}
 		}
 	}
