@@ -1,6 +1,34 @@
 #include "SourceProcessor.h"
 #include <iostream>
 
+// method to check if value is found in the vector
+bool isValInVect(vector<string> vector, string value) {
+	return std::find(vector.begin(), vector.end(), value) != vector.end();
+}
+
+// method to insert variable and constants from expr
+void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset, int stmtNum, string procedureName) {
+	int offset = initialOffset;
+	string offsetToken = tokens.at(currIdx + offset);
+	while (!isValInVect(loopCondition, offsetToken)) {
+		// check for values that does not match
+		if (!isValInVect({ "(", ")", ">", "<", "+", "-", "*", "/", "%" }, offsetToken)) {
+			if (isalpha(offsetToken[0])) {
+				Database::insertVariable(offsetToken);
+				if (offset == 2) {
+					// if it is an assignment
+					Database::insertUses(to_string(stmtNum), procedureName, offsetToken);
+				}
+			}
+			else if (isdigit(offsetToken[0])) {
+				Database::insertConstant(offsetToken);
+			}
+		}
+		offset += 1;
+		offsetToken = tokens.at(currIdx + offset);
+	}
+}
+
 // method for processing the source program
 // This method currently only inserts the procedure name into the database
 // using some highly simplified logic.
@@ -26,81 +54,92 @@ void SourceProcessor::process(string program) {
 	int containerStmtNum = 0; //reference statement number for container (if/while)
 	string prevState = "main"; //main, if, while
 	string curState = "main"; //main, if, else, while
+	bool isInExpr = false;
 
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
-		string tempToken = tokens.at(i);
 
-		
-		if ((((tokens.at(i - 1) == "{") || (tokens.at(i - 1) == ";") || (tokens.at(i - 1) == "}")))
-				&& (tempToken != "}") && (tempToken != "else")) {	//start of statement
+		string prevToken = tokens.at(i - 1);
+		string currToken = tokens.at(i);
 
-				prevStmtNum = stmtNum;
-				stmtNum++;
-				Database::insertStmt(to_string(stmtNum));
-				
-				//Handle Next Insert
-				if (prevStmtNum && curState != "skip" ) {
-					Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
-					//TODO - handle next*
-					if (curState != "main") {
-						Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
-					}
-				}
-				else if (curState == "skip") { //Handle when transiting to else
-					curState = "else";
-					Database::insertNext(to_string(containerStmtNum), to_string(stmtNum), "1");
-					Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
-				}
-
-
-				//Handle container (if/while)
-				if (tempToken == "if" || tempToken == "while" ) {
-					containerStmtNum = stmtNum;
-					curState = tempToken;
-				}
-
-				//Handle Assignment Insert
-				if (tokens.at(i + 1) == "=") {
-					Database::insertAssignment(to_string(stmtNum));
-				}
+		if (isValInVect({ "{", ";", "}" }, prevToken) &&
+			!isValInVect({ "}", "else" }, currToken)
+			) {
+			prevStmtNum = stmtNum;
+			stmtNum++;
+			Database::insertStmt(to_string(stmtNum));
 		}
-		else if (tempToken == "}") {
-				if (curState == "while") {
-					Database::insertNext(to_string(stmtNum), to_string(containerStmtNum), "1"); //while loop
-					Database::insertNext(to_string(containerStmtNum), to_string(stmtNum+1), "1"); //out of while-loop
-					curState = "main";
-				}
-				else if (curState == "if") {
-					curState = "skip";
-				}
-				else if (curState == "else") {
-					curState = "main";
-				}
+		else if (currToken == "}") { //handle end of container
+			if (curState == "while") {
+				Database::insertNext(to_string(stmtNum), to_string(containerStmtNum), "1"); //while loop
+				Database::insertNext(to_string(containerStmtNum), to_string(stmtNum + 1), "1"); //out of while-loop
+				curState = "main";
+			}
+			else if (curState == "if") {
+				curState = "skip";
+			}
+			else if (curState == "else") {
+				curState = "main";
+			}
 		}
-		else if (tempToken != "}") {
-				if (isalpha(tempToken[0]) && tokens.at(i + 1) == "=") {
-					Database::insertVariable(tempToken);
-				}
-				else if (tokens.at(i - 1) == "read") {
-					Database::insertVariable(tempToken);
-					Database::insertRead(to_string(stmtNum));
-				}
-				else if (tokens.at(i - 1) == "print") {
-					Database::insertVariable(tempToken);
-					Database::insertPrint(to_string(stmtNum));
-				}
-				else if (isdigit(tempToken[0])) {
-					Database::insertConstant(tempToken);
-				}
+
+		//Handle Next & Parent Insert
+		if (prevStmtNum && curState != "skip") {
+			Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
+			//TODO - handle next*
+			if (curState != "main") {
+				Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
+			}
+		}
+		else if (curState == "skip") { //Handle when transiting to else
+			curState = "else";
+			Database::insertNext(to_string(containerStmtNum), to_string(stmtNum), "1");
+			Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
+		}
+
+		//Handle container (if/while)
+		if (currToken == "if" || currToken == "while") {
+			containerStmtNum = stmtNum;
+			curState = currToken;
+		}
+
+		if (isValInVect({ "{", "then", ";" }, currToken)) {
+			isInExpr = false;
+		}
+		else if (isInExpr) {
+			// move to next iteration till end of expr
+			continue;
+		}
+
+		if (isValInVect({ "while", "if" }, currToken)) {
+			isInExpr = true;
+			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName);
+		}
+		// ensure not out of bounds
+		else if (currToken != "}") {
+			if (isalpha(currToken[0]) && tokens.at(i + 1) == "=") {
+				isInExpr = true;
+				Database::insertVariable(currToken);
+				Database::insertAssignment(to_string(stmtNum));
+				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
+				// offset two to skip equal sign
+				insertExpr({ ";" }, tokens, i, 2, stmtNum, procedureName);
+			}
+			else if (prevToken == "read") {
+				Database::insertVariable(currToken);
+				Database::insertRead(to_string(stmtNum));
+				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
+			}
+			else if (prevToken == "print") {
+				Database::insertVariable(currToken);
+				Database::insertPrint(to_string(stmtNum));
+				Database::insertUses(to_string(stmtNum), procedureName, currToken);
+			}
+			else if (prevToken == "call") {
+				// use calls table instead?
+				//Database::insertModifies(to_string(stmtNum), procedureName, currToken);
+				//Database::insertUses(to_string(stmtNum), procedureName, currToken);
+			}
 		}
 	}
-
-	//Handle Indirect-Next insert
-	//for (int i = 1; i < stmtNum; i++) {
-	//	for (int x = i+1; x <= stmtNum; x++) {
-	//		Database::insertNext(to_string(i), to_string(x), "0");
-	//	}
-	//}
-
 }		
