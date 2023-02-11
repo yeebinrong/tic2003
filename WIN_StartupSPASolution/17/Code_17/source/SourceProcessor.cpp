@@ -29,6 +29,13 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 	}
 }
 
+// method to flood insert Next*
+void indirectNext(int start, int stmtNum) {
+	for (int x = start; x > 0; x--) {
+		Database::insertNext(to_string(x), to_string(stmtNum), "0");
+	}
+}
+
 // method for processing the source program
 // This method currently only inserts the procedure name into the database
 // using some highly simplified logic.
@@ -77,7 +84,19 @@ void SourceProcessor::process(string program) {
 			//Handle Next & Parent Insert
 			if (prevStmtNum && curState != "skip") {
 				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
-				//TODO - handle next*
+
+				//Handle Next*
+				if (curState == "else") {
+					indirectNext(containerStmtNum, stmtNum);
+				}
+				else {
+					indirectNext(stmtNum - 1, stmtNum);
+					//Handle while-loop self-next
+					if (curState == "while") {
+						Database::insertNext(to_string(stmtNum), to_string(stmtNum), "0");
+					}
+				}
+
 				if (curState != "main") {
 					Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
 				}
@@ -85,6 +104,7 @@ void SourceProcessor::process(string program) {
 			else if (curState == "skip") { //Handle when transiting to else
 				curState = "else";
 				Database::insertNext(to_string(containerStmtNum), to_string(stmtNum), "1");
+				indirectNext(containerStmtNum, stmtNum);
 				Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
 			}
 		}
