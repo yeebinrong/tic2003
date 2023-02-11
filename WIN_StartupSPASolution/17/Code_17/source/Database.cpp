@@ -103,12 +103,12 @@ void Database::insertStmt(string stmtNo) {
 
 // method to insert a modifies into the database
 void Database::insertModifies(string stmtNo, string procedureName, string target) {
-	Database::executeQuery("INSERT INTO modifies ('stmtNo', 'procedureName', 'target) VALUES ('" + stmtNo + "', '" + procedureName + "', '" + target + "'); ");
+	Database::executeQuery("INSERT INTO modifies ('stmtNo', 'procedureName', 'target') VALUES ('" + stmtNo + "', '" + procedureName + "', '" + target + "'); ");
 }
 
 // method to insert a uses into the database
 void Database::insertUses(string stmtNo, string procedureName, string target) {
-	Database::executeQuery("INSERT INTO uses ('stmtNo', 'procedureName', 'target) VALUES ('" + stmtNo + "', '" + procedureName + "', '" + target + "'); ");
+	Database::executeQuery("INSERT INTO uses ('stmtNo', 'procedureName', 'target') VALUES ('" + stmtNo + "', '" + procedureName + "', '" + target + "'); ");
 }
 
 // method to insert a Next into the database

@@ -52,7 +52,6 @@ void SourceProcessor::process(string program) {
 	int stmtNum = 0; //statement increment
 	int prevStmtNum = 0; //statement-1 + skip 0->1
 	int containerStmtNum = 0; //reference statement number for container (if/while)
-	string prevState = "main"; //main, if, while
 	string curState = "main"; //main, if, else, while
 	bool isInExpr = false;
 
@@ -68,8 +67,28 @@ void SourceProcessor::process(string program) {
 			prevStmtNum = stmtNum;
 			stmtNum++;
 			Database::insertStmt(to_string(stmtNum));
+
+			//Update container state (if/while/main)
+			if(isValInVect({ "if" , "while" }, currToken)){
+				containerStmtNum = stmtNum;
+				curState = currToken;
+			}
+
+			//Handle Next & Parent Insert
+			if (prevStmtNum && curState != "skip") {
+				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
+				//TODO - handle next*
+				if (curState != "main") {
+					Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
+				}
+			}
+			else if (curState == "skip") { //Handle when transiting to else
+				curState = "else";
+				Database::insertNext(to_string(containerStmtNum), to_string(stmtNum), "1");
+				Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
+			}
 		}
-		else if (currToken == "}") { //handle end of container
+		else if (currToken == "}") { //handle end of container, update container state
 			if (curState == "while") {
 				Database::insertNext(to_string(stmtNum), to_string(containerStmtNum), "1"); //while loop
 				Database::insertNext(to_string(containerStmtNum), to_string(stmtNum + 1), "1"); //out of while-loop
@@ -81,26 +100,6 @@ void SourceProcessor::process(string program) {
 			else if (curState == "else") {
 				curState = "main";
 			}
-		}
-
-		//Handle Next & Parent Insert
-		if (prevStmtNum && curState != "skip") {
-			Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
-			//TODO - handle next*
-			if (curState != "main") {
-				Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
-			}
-		}
-		else if (curState == "skip") { //Handle when transiting to else
-			curState = "else";
-			Database::insertNext(to_string(containerStmtNum), to_string(stmtNum), "1");
-			Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
-		}
-
-		//Handle container (if/while)
-		if (currToken == "if" || currToken == "while") {
-			containerStmtNum = stmtNum;
-			curState = currToken;
 		}
 
 		if (isValInVect({ "{", "then", ";" }, currToken)) {
