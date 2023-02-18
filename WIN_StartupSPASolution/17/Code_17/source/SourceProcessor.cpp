@@ -1,5 +1,6 @@
 #include "SourceProcessor.h"
 #include <iostream>
+#include <vector>
 
 // method to check if value is found in the vector
 bool isValInVect(vector<string> vector, string value) {
@@ -58,10 +59,14 @@ void SourceProcessor::process(string program) {
 	//@@@ init @@@//
 	int stmtNum = 0; //statement increment
 	int prevStmtNum = 0; //statement-1 + skip 0->1
+	vector<int> lastIfNum;
 	int containerStmtNum = 0; //reference statement number for container (if/while)
 	string curState = "main"; //main, if, else, while
 	bool isInExpr = false;
-
+	
+	vector<pair<string, int>> container;
+	container.emplace_back("main", 0);
+	
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
 
@@ -77,8 +82,9 @@ void SourceProcessor::process(string program) {
 ///////////////////////////////////////////////////////////////////////////
 			//Update container state (if/while/main)
 			if(isValInVect({ "if" , "while" }, currToken)){
-				containerStmtNum = stmtNum;
+
 				curState = currToken;
+				container.emplace_back(curState,stmtNum);
 			}
 
 			//Handle Next & Parent Insert
@@ -87,10 +93,15 @@ void SourceProcessor::process(string program) {
 
 				//Handle Next*
 				if (curState == "else") {
-					indirectNext(containerStmtNum, stmtNum);
+					indirectNext(container.back().second, stmtNum);
 				}
 				else {
-					indirectNext(stmtNum - 1, stmtNum);
+					Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "0");
+					//insert next if -> out of container
+					while (!lastIfNum.empty()) {
+						Database::insertNext(to_string(lastIfNum.back()), to_string(stmtNum), "1");
+						lastIfNum.pop_back();
+					}
 					//Handle while-loop self-next
 					if (curState == "while") {
 						Database::insertNext(to_string(stmtNum), to_string(stmtNum), "0");
@@ -98,27 +109,34 @@ void SourceProcessor::process(string program) {
 				}
 
 				if (curState != "main") {
-					Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
+					Database::insertParent(to_string(container.back().second), to_string(stmtNum), "1");
 				}
 			}
 			else if (curState == "skip") { //Handle when transiting to else
 				curState = "else";
-				Database::insertNext(to_string(containerStmtNum), to_string(stmtNum), "1");
-				indirectNext(containerStmtNum, stmtNum);
-				Database::insertParent(to_string(containerStmtNum), to_string(stmtNum), "1");
+				container.emplace_back(curState, container.back().second);
+				Database::insertNext(to_string(container.back().second), to_string(stmtNum), "1");
+				indirectNext(container.back().second, stmtNum);
+				Database::insertParent(to_string(container.back().second), to_string(stmtNum), "1");
 			}
 		}
 		else if (currToken == "}") { //handle end of container, update container state
 			if (curState == "while") {
-				Database::insertNext(to_string(stmtNum), to_string(containerStmtNum), "1"); //while loop
-				Database::insertNext(to_string(containerStmtNum), to_string(stmtNum + 1), "1"); //out of while-loop
-				curState = "main";
+				Database::insertNext(to_string(stmtNum), to_string(container.back().second), "1"); //while loop
+				for (int i = stmtNum; i >= container.back().second; i--) {
+					indirectNext(stmtNum, i);
+				}
+				container.pop_back();
+				curState = container.back().first;
 			}
 			else if (curState == "if") {
 				curState = "skip";
+				lastIfNum.push_back(stmtNum);
 			}
 			else if (curState == "else") {
-				curState = "main";
+				container.pop_back();
+				container.pop_back();
+				curState = container.back().first;
 			}
 		}
 ////////////////////////////////////////////////////////////////////////////
