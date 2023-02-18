@@ -74,7 +74,7 @@ void SourceProcessor::process(string program) {
 			prevStmtNum = stmtNum;
 			stmtNum++;
 			Database::insertStmt(to_string(stmtNum));
-
+///////////////////////////////////////////////////////////////////////////
 			//Update container state (if/while/main)
 			if(isValInVect({ "if" , "while" }, currToken)){
 				containerStmtNum = stmtNum;
@@ -121,7 +121,7 @@ void SourceProcessor::process(string program) {
 				curState = "main";
 			}
 		}
-
+////////////////////////////////////////////////////////////////////////////
 		if (isValInVect({ "{", "then", ";" }, currToken)) {
 			isInExpr = false;
 		}
