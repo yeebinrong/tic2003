@@ -15,7 +15,7 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 		if (!isValInVect({ "(", ")", ">", "<", "+", "-", "*", "/", "%" }, offsetToken)) {
 			if (isalpha(offsetToken[0])) {
 				Database::insertVariable(offsetToken);
-				if (offset == 2) {
+				if (initialOffset == 2) {
 					// if it is an assignment
 					Database::insertUses(to_string(stmtNum), procedureName, offsetToken);
 				}
