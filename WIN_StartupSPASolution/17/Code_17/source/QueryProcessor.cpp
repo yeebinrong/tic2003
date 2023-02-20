@@ -54,8 +54,6 @@ string checkAndReplaceLike(string str) {
 }
 
 string appendPatternClause(string clause, string column, string value) {
-	cout << "LIKE QUERYYYY" << endl;
-	cout << value << endl;
 	if (value != "_") {
 		clause = appendAnd(clause);
 		if (isExactMatch(value)) {
@@ -102,7 +100,6 @@ string formatTableName(string tableName) {
 // appends the join clause
 string appendJoinClause(string clause, string targetTable, string mainSynonymType, vector<string> joinedTables) {
 	targetTable = formatTableName(targetTable);
-	cout << targetTable << endl;
 	// these tables return statement number
 	if (!isValInVectTwo(joinedTables, targetTable) && isValInVectTwo({ "uses", "modifies", "pattern_table"}, targetTable)) {
 		if (isValInVectTwo({"read", "print", "assign", "stmt", "while", "if"}, mainSynonymType)) {
@@ -220,6 +217,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		string currToken = tokens.at(i);
 		if (isInCondition) {
 			if (currToken == ")") {
+				// end of condition logic has to been improved to consider patterns with brackets
 				isInCondition = false;
 			}
 			continue;
