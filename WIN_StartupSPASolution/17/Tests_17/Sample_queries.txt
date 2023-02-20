@@ -48,3 +48,13 @@ assign a; variable v;
 Select a such that Modifies (a, "cenY") pattern a (_, "cenY + y")
 9
 5000
+11 - identify parent statement for child statement
+stmt s;
+Select s such that Parent (s, 7)
+5
+5000
+12 - identify assignments within a loop
+assign a; while w;
+Select a such that Parent* (w, a)
+5
+5000
