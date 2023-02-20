@@ -1,19 +1,23 @@
 procedure computeCentroid {
     if (count < 1) then {
        flag = 1;
+        if (count < 1) then {
+           flag = 1;
+        } else {
+           cenX = cenX / count;
+        }
     } else {
       cenX = cenX / count;
       cenY = cenY / count;
-      while ((x * x + y * y) > 0) {
-            count = count + 1;
-            cenX = cenX + x;
-            cenY = cenY + y;i
-            call readPoint;
-        }
     }
     normSq = cenX * cenX + cenY * cenY;
     print index;
 }
+
+
+
+
+
 
 
 

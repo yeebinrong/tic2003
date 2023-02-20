@@ -31,11 +31,21 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 }
 
 // method to flood insert Next*
-void indirectNext(int start, int stmtNum) {
-	for (int x = start; x > 0; x--) {
-		Database::insertNext(to_string(x), to_string(stmtNum), "0");
-	}
+void indirectNext(int topOfContainer, int stmtNum, vector<pair<string,int>> container) {
+		for (int x = stmtNum-1; x >= topOfContainer; x--) {
+			Database::insertNext(to_string(x), to_string(stmtNum), "0");
+		}
+		if (container.back().first == "else") {
+			container.pop_back();
+			Database::insertNext(to_string(container.back().second), to_string(stmtNum), "0");
+		}
 }
+
+void indirectParent(int containerHead, int stmtNum) {
+	for (int i = stmtNum; i > containerHead; i--)
+		Database::insertParent(to_string(containerHead), to_string(i), "0");
+}
+
 
 // method for processing the source program
 // This method currently only inserts the procedure name into the database
@@ -60,12 +70,13 @@ void SourceProcessor::process(string program) {
 	int stmtNum = 0; //statement increment
 	int prevStmtNum = 0; //statement-1 + skip 0->1
 	vector<int> lastIfNum;
-	int containerStmtNum = 0; //reference statement number for container (if/while)
+	//int containerStmtNum = 0; //reference statement number for container (if/while)
+	string prevState = "main";
 	string curState = "main"; //main, if, else, while
 	bool isInExpr = false;
 	
 	vector<pair<string, int>> container;
-	container.emplace_back("main", 0);
+	container.emplace_back("main", 1);
 	
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
@@ -91,50 +102,63 @@ void SourceProcessor::process(string program) {
 			if (prevStmtNum && curState != "skip") {
 				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
 
-				//Handle Next*
 				if (curState == "else") {
-					indirectNext(container.back().second, stmtNum);
+					indirectNext(container.back().second, stmtNum, container); //888
 				}
 				else {
-					Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "0");
-					//insert next if -> out of container
-					while (!lastIfNum.empty()) {
-						Database::insertNext(to_string(lastIfNum.back()), to_string(stmtNum), "1");
-						lastIfNum.pop_back();
+
+					if (prevState == "else") {
+						while (!lastIfNum.empty()) {
+							Database::insertNext(to_string(lastIfNum.back()), to_string(stmtNum), "1");
+							lastIfNum.pop_back();
+						}
 					}
+
 					//Handle while-loop self-next
 					if (curState == "while") {
-						Database::insertNext(to_string(stmtNum), to_string(stmtNum), "0");
+						Database::insertNext(to_string(stmtNum), to_string(stmtNum), "0"); //
+					}
+					else { //curState == "if" or "main"
+						indirectNext(container.back().second, stmtNum, container); //888
 					}
 				}
 
 				if (curState != "main") {
-					Database::insertParent(to_string(container.back().second), to_string(stmtNum), "1");
+					if (container.back().second != stmtNum) {
+						Database::insertParent(to_string(container.back().second), to_string(stmtNum), "1");
+					}
 				}
 			}
 			else if (curState == "skip") { //Handle when transiting to else
 				curState = "else";
-				container.emplace_back(curState, container.back().second);
 				Database::insertNext(to_string(container.back().second), to_string(stmtNum), "1");
-				indirectNext(container.back().second, stmtNum);
 				Database::insertParent(to_string(container.back().second), to_string(stmtNum), "1");
+				container.emplace_back(curState, stmtNum);
 			}
 		}
 		else if (currToken == "}") { //handle end of container, update container state
 			if (curState == "while") {
+				prevState = curState;
 				Database::insertNext(to_string(stmtNum), to_string(container.back().second), "1"); //while loop
 				for (int i = stmtNum; i >= container.back().second; i--) {
-					indirectNext(stmtNum, i);
+					indirectNext(stmtNum, i, container); //888
 				}
+				int prevContHead = container.back().second;
 				container.pop_back();
 				curState = container.back().first;
 			}
 			else if (curState == "if") {
+				prevState = curState;
 				curState = "skip";
 				lastIfNum.push_back(stmtNum);
+				indirectNext(container.back().second,stmtNum, container); //888
+
 			}
 			else if (curState == "else") {
+				prevState = curState;
 				container.pop_back();
+				//insert next if -> out of container
+				int prevContHead = container.back().second;
 				container.pop_back();
 				curState = container.back().first;
 			}
