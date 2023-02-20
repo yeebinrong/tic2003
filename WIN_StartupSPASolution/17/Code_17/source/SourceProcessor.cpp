@@ -11,12 +11,14 @@ bool isValInVect(vector<string> vector, string value) {
 void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset, int stmtNum, string procedureName) {
 	int offset = initialOffset;
 	string offsetToken = tokens.at(currIdx + offset);
+	string concatStr;
 	while (!isValInVect(loopCondition, offsetToken)) {
+		concatStr += offsetToken;
 		// check for values that does not match
 		if (!isValInVect({ "(", ")", ">", "<", "+", "-", "*", "/", "%" }, offsetToken)) {
 			if (isalpha(offsetToken[0])) {
 				Database::insertVariable(offsetToken);
-				if (offset == 2) {
+				if (initialOffset == 2) {
 					// if it is an assignment
 					Database::insertUses(to_string(stmtNum), procedureName, offsetToken);
 				}
@@ -28,6 +30,7 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 		offset += 1;
 		offsetToken = tokens.at(currIdx + offset);
 	}
+	Database::insertPattern(to_string(stmtNum), tokens.at(currIdx), concatStr);
 }
 
 // method to flood insert Next*
@@ -78,24 +81,32 @@ void SourceProcessor::process(string program) {
 	vector<pair<string, int>> container;
 	container.emplace_back("main", 1);
 	
+	vector<string> containers;
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
 
 		string prevToken = tokens.at(i - 1);
 		string currToken = tokens.at(i);
-
-		if (isValInVect({ "{", ";", "}" }, prevToken) &&
-			!isValInVect({ "}", "else" }, currToken)
-			) {
+		if (containers.size() > 0 && currToken == "}") {
+			containers.pop_back();
+		}
+		if (isValInVect({"{", ";", "}"}, prevToken) &&
+			!isValInVect({"}", "else"}, currToken)
+		) {
 			prevStmtNum = stmtNum;
 			stmtNum++;
 			Database::insertStmt(to_string(stmtNum));
 ///////////////////////////////////////////////////////////////////////////
 			//Update container state (if/while/main)
-			if(isValInVect({ "if" , "while" }, currToken)){
-
+			if (isValInVect(containers, "while")) {
+				Database::insertWhile(to_string(stmtNum));
 				curState = currToken;
-				container.emplace_back(curState,stmtNum);
+				container.emplace_back(curState, stmtNum);
+			}
+			if (isValInVect(containers, "if")) {
+				Database::insertIf(to_string(stmtNum));
+				curState = currToken;
+				container.emplace_back(curState, stmtNum);
 			}
 
 			//Handle Next & Parent Insert
@@ -107,12 +118,8 @@ void SourceProcessor::process(string program) {
 				}
 				else {
 
-					if (prevState == "else") {
-						while (!lastIfNum.empty()) {
-							Database::insertNext(to_string(lastIfNum.back()), to_string(stmtNum), "1");
-							lastIfNum.pop_back();
-						}
-					}
+
+		}
 
 					//Handle while-loop self-next
 					if (curState == "while") {
@@ -171,8 +178,15 @@ void SourceProcessor::process(string program) {
 			// move to next iteration till end of expr
 			continue;
 		}
-
-		if (isValInVect({ "while", "if" }, currToken)) {
+		if (isValInVect({"while", "if"}, currToken)) {
+			if (currToken == "while") {
+				Database::insertWhile(to_string(stmtNum));
+				containers.push_back("while");
+			}
+			else if (currToken == "if") {
+				Database::insertIf(to_string(stmtNum));
+				containers.push_back("if");
+			}
 			isInExpr = true;
 			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName);
 		}
@@ -197,7 +211,7 @@ void SourceProcessor::process(string program) {
 				Database::insertUses(to_string(stmtNum), procedureName, currToken);
 			}
 			else if (prevToken == "call") {
-				// use calls table instead?
+				// not needed for iteration 2
 				//Database::insertModifies(to_string(stmtNum), procedureName, currToken);
 				//Database::insertUses(to_string(stmtNum), procedureName, currToken);
 			}

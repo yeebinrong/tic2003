@@ -50,6 +50,15 @@ public:
 	static void insertStmt(string stmtno);
 	static void getStmts(vector<string>& results);
 
+	// method to insert a if into the database
+	static void insertIf(string stmtno);
+
+	// method to insert a while into the database
+	static void insertWhile(string stmtno);
+
+	// method to insert a pattern into the database
+	static void insertPattern(string stmtNo, string source, string target);
+
 	// method to insert modifies into the database
 	static void insertModifies(string stmtno, string procedureName, string target);
 
@@ -62,6 +71,8 @@ public:
 		// method to insert a Parent into the database
 	static void insertParent(string stmtNo, string childStmtNo, string direct );
 
+
+	static void getQueryResults(vector<string>& results, string query);
 
 private:
 	// the connection pointer to the database
