@@ -157,27 +157,29 @@ string appendWhereClause(string clause, string targetTable, string mainSynonymTy
 	return clause;
 }
 
-string parsePatternSource(int offset, vector<string> tokens) {
+string checkExactMatch(int offset, vector<string> tokens) {
 	string value = tokens.at(offset);
 	// check for "variable name" (exact match)
 	if (value == "\"") {
 		value = "";
 		offset += 1;
-		string tempToken = tokens.at(offset);
-		while (tempToken != "\"") {
-			value += tempToken;
-			offset += 1;
-			tempToken = tokens.at(offset);
+		if (offset < tokens.size()) {
+			string tempToken = tokens.at(offset);
+			while (tempToken != "\"") {
+				value += tempToken;
+				offset += 1;
+				tempToken = tokens.at(offset);
+			}
 		}
 	}
 	return value;
 }
 
-string parsePatternTarget(int offset, vector<string> tokens) {
+string checkExactOrPartialMatch(int offset, vector<string> tokens) {
 	// check for "variable name" (exact match)
-	string value = parsePatternSource(offset, tokens);
+	string value = checkExactMatch(offset, tokens);
 	// check for _"variable"_ (partial match)
-	if (value == "_" && tokens.at(offset + 1) == "\"") {
+	if (value == "_" && (offset + 1) < (tokens.size() - 1) && tokens.at(offset + 1) == "\"") {
 		offset += 2;
 		string tempToken = tokens.at(offset);
 		while (tempToken != "\"") {
@@ -249,10 +251,15 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				isInCondition = true;
 				int offset = i + 3;
 				// source can be _ (match all) or "variable name" (exact match)
-				string source = parsePatternSource(offset, tokens);
-				offset += 2;
+				string source = checkExactMatch(offset, tokens);
+				if (source[0] != '_') {
+					offset += 4;
+				}
+				else {
+					offset += 2;
+				}
 				// target can be _ (match all) or "variable name" (exact match) or _"variable"_ (partial match)
-				string target = parsePatternTarget(offset, tokens);
+				string target = checkExactOrPartialMatch(offset, tokens);
 				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 			}
