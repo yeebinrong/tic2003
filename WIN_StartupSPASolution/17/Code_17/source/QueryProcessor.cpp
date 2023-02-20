@@ -100,9 +100,10 @@ string formatTableName(string tableName) {
 // appends the join clause
 string appendJoinClause(string clause, string targetTable, string mainSynonymType, vector<string> joinedTables) {
 	targetTable = formatTableName(targetTable);
+	mainSynonymType = formatTableName(mainSynonymType);
 	// these tables return statement number
 	if (!isValInVectTwo(joinedTables, targetTable) && isValInVectTwo({ "uses", "modifies", "pattern_table"}, targetTable)) {
-		if (isValInVectTwo({"read", "print", "assign", "stmt", "while", "if"}, mainSynonymType)) {
+		if (isValInVectTwo({"read", "print", "assign", "stmt", "while", "if_table"}, mainSynonymType)) {
 			clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".stmtNo = " + targetTable + ".stmtNo";
 		}
 		else if (mainSynonymType == "procedure") {
@@ -113,7 +114,7 @@ string appendJoinClause(string clause, string targetTable, string mainSynonymTyp
 		}
 		else if (mainSynonymType == "constant") {
 			// constant never used, digit referenced is always stmtno in clauses
-			throw invalid_argument("unexpected constant type tgt w modifies / uses.");
+			throw invalid_argument("unexpected constant type tgt w modifies / uses / pattern.");
 		}
 		else {
 			throw invalid_argument("unexpected synonym type: " + mainSynonymType);
@@ -125,7 +126,9 @@ string appendJoinClause(string clause, string targetTable, string mainSynonymTyp
 
 string appendWhereClause(string clause, string targetTable, string mainSynonymType, string source, string target, map<string, string> declarationMap) {
 	targetTable = formatTableName(targetTable);
-	if (isValInVectTwo({ "read", "print", "assign", "stmt", "if", "while" }, mainSynonymType)) {
+	mainSynonymType = formatTableName(mainSynonymType);
+	// all synonym type except constant
+	if (isValInVectTwo({ "stmt", "read", "print", "assign", "while", "if_table", "variable", "procedure" }, mainSynonymType)) {
 		if (isdigit(source[0])) {
 			clause = appendAnd(clause);
 			clause += targetTable + ".stmtNo = " + "'" + source + "'";

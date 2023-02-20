@@ -43,7 +43,7 @@ assign a; variable v;
 Select a such that Modifies (a, "cenY")
 4, 9, 14
 5000
-10 - identify assignment that modifies cenY and uses pattern "cenY + y"
+10 - identify assignment that modifies cenY and uses exact pattern "cenY + y"
 assign a; variable v;
 Select a such that Modifies (a, "cenY") pattern a (_, "cenY + y")
 9
