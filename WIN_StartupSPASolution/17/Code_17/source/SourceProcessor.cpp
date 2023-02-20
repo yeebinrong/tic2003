@@ -78,8 +78,8 @@ void SourceProcessor::process(string program) {
 	string curState = "main"; //main, if, else, while
 	bool isInExpr = false;
 	
-	vector<pair<string, int>> container;
-	container.emplace_back("main", 1);
+	vector<pair<string, int>> containerList;
+	containerList.emplace_back("main", 1);
 	
 	vector<string> containers;
 	// iterate subsequent statements for variable/constant
@@ -101,12 +101,12 @@ void SourceProcessor::process(string program) {
 			if (isValInVect(containers, "while")) {
 				Database::insertWhile(to_string(stmtNum));
 				curState = currToken;
-				container.emplace_back(curState, stmtNum);
+				containerList.emplace_back(curState, stmtNum);
 			}
 			if (isValInVect(containers, "if")) {
 				Database::insertIf(to_string(stmtNum));
 				curState = currToken;
-				container.emplace_back(curState, stmtNum);
+				containerList.emplace_back(curState, stmtNum);
 			}
 
 			//Handle Next & Parent Insert
@@ -114,60 +114,56 @@ void SourceProcessor::process(string program) {
 				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
 
 				if (curState == "else") {
-					indirectNext(container.back().second, stmtNum, container); //888
+					indirectNext(containerList.back().second, stmtNum, containerList); //888
 				}
 				else {
-
-
-		}
-
 					//Handle while-loop self-next
 					if (curState == "while") {
 						Database::insertNext(to_string(stmtNum), to_string(stmtNum), "0"); //
 					}
 					else { //curState == "if" or "main"
-						indirectNext(container.back().second, stmtNum, container); //888
+						indirectNext(containerList.back().second, stmtNum, containerList); //888
 					}
 				}
 
 				if (curState != "main") {
-					if (container.back().second != stmtNum) {
-						Database::insertParent(to_string(container.back().second), to_string(stmtNum), "1");
+					if (containerList.back().second != stmtNum) {
+						Database::insertParent(to_string(containerList.back().second), to_string(stmtNum), "1");
 					}
 				}
 			}
 			else if (curState == "skip") { //Handle when transiting to else
 				curState = "else";
-				Database::insertNext(to_string(container.back().second), to_string(stmtNum), "1");
-				Database::insertParent(to_string(container.back().second), to_string(stmtNum), "1");
-				container.emplace_back(curState, stmtNum);
+				Database::insertNext(to_string(containerList.back().second), to_string(stmtNum), "1");
+				Database::insertParent(to_string(containerList.back().second), to_string(stmtNum), "1");
+				containerList.emplace_back(curState, stmtNum);
 			}
 		}
 		else if (currToken == "}") { //handle end of container, update container state
 			if (curState == "while") {
 				prevState = curState;
-				Database::insertNext(to_string(stmtNum), to_string(container.back().second), "1"); //while loop
-				for (int i = stmtNum; i >= container.back().second; i--) {
-					indirectNext(stmtNum, i, container); //888
+				Database::insertNext(to_string(stmtNum), to_string(containerList.back().second), "1"); //while loop
+				for (int i = stmtNum; i >= containerList.back().second; i--) {
+					indirectNext(stmtNum, i, containerList); //888
 				}
-				int prevContHead = container.back().second;
-				container.pop_back();
-				curState = container.back().first;
+				int prevContHead = containerList.back().second;
+				containerList.pop_back();
+				curState = containerList.back().first;
 			}
 			else if (curState == "if") {
 				prevState = curState;
 				curState = "skip";
 				lastIfNum.push_back(stmtNum);
-				indirectNext(container.back().second,stmtNum, container); //888
+				indirectNext(containerList.back().second,stmtNum, containerList); //888
 
 			}
 			else if (curState == "else") {
 				prevState = curState;
-				container.pop_back();
+				containerList.pop_back();
 				//insert next if -> out of container
-				int prevContHead = container.back().second;
-				container.pop_back();
-				curState = container.back().first;
+				int prevContHead = containerList.back().second;
+				containerList.pop_back();
+				curState = containerList.back().first;
 			}
 		}
 ////////////////////////////////////////////////////////////////////////////
