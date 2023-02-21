@@ -79,64 +79,87 @@ void Database::close() {
 	sqlite3_close(dbConnection);
 }
 
+string generateInsertQuery(string tableName, vector<string> columnNames, vector<string> values) {
+	string sb = "INSERT INTO ";
+	sb = sb + tableName;
+	sb = sb + "(";
+	for (string columnName : columnNames) {
+		sb = sb + "'";
+		sb = sb + columnName;
+		sb = sb + "'";
+		sb = sb + ",";
+	}
+	sb.pop_back();
+	sb = sb + ") VALUES (";
+	for (string value : values) {
+		sb = sb + "'";
+		sb = sb + value;
+		sb = sb + "'";
+		sb = sb + ",";
+	}
+	sb.pop_back();
+	sb = sb + ");";
+	return sb;
+}
+
 void Database::insertProcedure(string name)
 {
-	Database::executeQuery("INSERT INTO procedure ('procedureName') VALUES ('" + name + "');");
+	Database::executeQuery(generateInsertQuery("procedure", { "procedureName" }, { name }));
 }
 
 // method to insert a Variable into the database
 void Database::insertVariable(string name) {
-	Database::executeQuery("INSERT INTO variable ('name') VALUES ('" + name + "');");
+	Database::executeQuery(generateInsertQuery("variable", { "procedureName" }, { name }));
 }
 
 // method to insert a Constant into the database
 void Database::insertConstant(string value) {
-	Database::executeQuery("INSERT INTO constant ('value') VALUES ('" + value + "');");
+	Database::executeQuery(generateInsertQuery("constant", { "value" }, { value }));
 }
 
 // method to insert a Assignment into the database
 void Database::insertAssignment(string stmtNo) {
-	Database::executeQuery("INSERT INTO assign ('stmtNo') VALUES ('" + stmtNo + "');");
+	Database::executeQuery(generateInsertQuery("assign", { "stmtNo" }, { stmtNo }));
 }
 
 // method to insert a Print into the database
 void Database::insertPrint(string stmtNo) {
-	Database::executeQuery("INSERT INTO print ('stmtNo') VALUES ('" + stmtNo + "');");
+	Database::executeQuery(generateInsertQuery("print", { "stmtNo" }, { stmtNo }));
 }
 
 // method to insert a Read into the database
 void Database::insertRead(string stmtNo) {
-	Database::executeQuery("INSERT INTO read ('stmtNo') VALUES ('" + stmtNo + "');");
+	Database::executeQuery(generateInsertQuery("read", { "stmtNo" }, { stmtNo }));
 }
 
 // method to insert a Statement into the database
 void Database::insertStmt(string stmtNo) {
-	Database::executeQuery("INSERT INTO stmt ('stmtNo') VALUES ('" + stmtNo + "');");
+	Database::executeQuery(generateInsertQuery("stmt", { "stmtNo" }, { stmtNo }));
 }
 
 // method to insert a while into the database
 void Database::insertWhile(string stmtNo) {
-	Database::executeQuery("INSERT INTO while ('stmtNo') VALUES ('" + stmtNo + "');");
+	Database::executeQuery(generateInsertQuery("while", { "stmtNo" }, { stmtNo }));
 }
 
 // method to insert a if into the database
 void Database::insertIf(string stmtNo) {
-	Database::executeQuery("INSERT INTO if_table ('stmtNo') VALUES ('" + stmtNo + "');");
+	Database::executeQuery(generateInsertQuery("if_table", { "stmtNo" }, { stmtNo }));
 }
 
 // method to insert a pattern into the database
 void Database::insertPattern(string stmtNo, string source, string target) {
-	Database::executeQuery("INSERT INTO pattern_table ('stmtNo', 'source', 'target') VALUES ('" + stmtNo + "', '" + source + "', '" + target + "'); ");
+	Database::executeQuery(generateInsertQuery("pattern_table", { "stmtNo", "source", "target" }, { stmtNo, source, target }));
 }
 
 // method to insert a modifies into the database
 void Database::insertModifies(string stmtNo, string procedureName, string target) {
-	Database::executeQuery("INSERT INTO modifies ('stmtNo', 'procedureName', 'target') VALUES ('" + stmtNo + "', '" + procedureName + "', '" + target + "'); ");
+	Database::executeQuery(generateInsertQuery("modifies", { "stmtNo", "procedureName", "target" }, { stmtNo, procedureName, target }));
 }
 
 // method to insert a uses into the database
 void Database::insertUses(string stmtNo, string procedureName, string target) {
-	Database::executeQuery("INSERT INTO uses ('stmtNo', 'procedureName', 'target') VALUES ('" + stmtNo + "', '" + procedureName + "', '" + target + "'); ");
+	Database::executeQuery(generateInsertQuery("uses", { "stmtNo", "procedureName", "target" }, { stmtNo, procedureName, target }));
 }
 
 // method to insert a Next into the database
