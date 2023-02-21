@@ -16,7 +16,7 @@ Select a such that Uses (a, "cenY")
 4 - identify assignment that modifies count
 assign a; variable v;
 Select a such that pattern a ("count", _)
-2
+2, 7
 5000
 5 - identify assignment uses pattern _"count"_
 assign a; variable v;
@@ -36,7 +36,7 @@ Select a such that Modifies (a, "cenX") pattern a (_, _"cenX"_)
 8 - identify assignment that modifies count and modifies pattern _"count"_
 assign a; variable v;
 Select a such that Modifies (a, "count") pattern a ("count", _)
-7
+2, 7
 5000
 9 - identify assignment that modifies cenY
 assign a; variable v;
