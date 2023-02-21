@@ -279,7 +279,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			}
 			else if (currToken == "Parent" && tokens.at(i + 1) == "*") {
 				isInCondition = true;
-				currToken += "*";D
+				currToken += "*";
 				string source = tokens.at(i + 3);
 				string target = tokens.at(i + 5);
 				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
@@ -289,7 +289,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			else if (currToken == "Next") {
 				isInCondition = true;
 				string source = tokens.at(i + 2);
-				string target = tokens.at(i + 4);D
+				string target = tokens.at(i + 4);
 				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
 				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
