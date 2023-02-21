@@ -143,9 +143,9 @@ void SourceProcessor::process(string program) {
 			if (curState == "while") {
 				prevState = curState;
 				Database::insertNext(to_string(stmtNum), to_string(containerList.back().second), "1"); //while loop
-				for (int i = stmtNum; i >= containerList.back().second; i--) {
-					indirectNext(stmtNum, i, containerList); //888
-				}
+				//for (int i = stmtNum; i >= containerList.back().second; i--) {
+				//	indirectNext(stmtNum, i, containerList); //working
+				//}
 				int prevContHead = containerList.back().second;
 				containerList.pop_back();
 				curState = containerList.back().first;
@@ -154,7 +154,6 @@ void SourceProcessor::process(string program) {
 				prevState = curState;
 				curState = "skip";
 				lastIfNum.push_back(stmtNum);
-				indirectNext(containerList.back().second,stmtNum, containerList); //888
 
 			}
 			else if (curState == "else") {

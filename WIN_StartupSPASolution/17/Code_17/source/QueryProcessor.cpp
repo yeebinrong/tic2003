@@ -98,7 +98,10 @@ string formatTableName(string tableName) {
 		return "pattern_table";
 	}
 	else if (tableName == "Parent" || tableName == "Parent*") {
-		return "parents";
+		return "parent";
+	}
+	else if (tableName == "Next" || tableName == "Next*") {
+		return "nexts";
 	}
 	else if (isupper(tableName[0])) {
 		tableName[0] = tolower(tableName[0]);
@@ -112,7 +115,7 @@ string appendJoinClause(string clause, string targetTable, string mainSynonymTyp
 	targetTable = formatTableName(targetTable);
 	mainSynonymType = formatTableName(mainSynonymType);
 	// these tables return statement number
-	if (!isValInVectTwo(joinedTables, targetTable) && isValInVectTwo({ "uses", "modifies", "pattern_table", "parents"}, targetTable)) {
+	if (!isValInVectTwo(joinedTables, targetTable) && isValInVectTwo({ "uses", "modifies", "pattern_table", "parents", "nexts"}, targetTable)) {
 		if (isValInVectTwo({"read", "print", "assign", "stmt", "while", "if_table"}, mainSynonymType)) {
 			clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".stmtNo = " + targetTable + ".stmtNo";
 		}
@@ -136,7 +139,6 @@ string appendJoinClause(string clause, string targetTable, string mainSynonymTyp
 
 string appendWhereClause(string clause, string targetTable, string mainSynonymType, string source, string target, map<string, string> declarationMap) {
 	bool direct = isDirect(targetTable);
-	cout << "this is direct:" << direct << endl;
 	targetTable = formatTableName(targetTable);
 	mainSynonymType = formatTableName(mainSynonymType);
 	// all synonym type except constant
@@ -163,25 +165,35 @@ string appendWhereClause(string clause, string targetTable, string mainSynonymTy
 					clause = appendAnd(clause);
 					clause += targetTable + ".target = '" + target + "'";
 				}
-				if (targetTable == "parents") {
-					if (isdigit(source[0])) {
-						clause = appendAnd(clause);
-						clause += targetTable + ".stmtNo = '" + source + "'";
-					}
-					if (isdigit(target[0])) {
-						clause = appendAnd(clause);
-						clause += targetTable + ".childStmtNo = '" + target + "'";
-					}
+			}
+		}
+		if (targetTable == "parents") {
+			if (isdigit(target[0])) {
+				clause = appendAnd(clause);
+				clause += targetTable + ".childStmtNo = '" + target + "'";
+			}
 
-					clause = appendAnd(clause);
-					if (direct) {
-						clause += targetTable + ".direct = '1'";
-					}
-					else {
-						clause += targetTable + ".direct = '0'";
-					}
-				}
-				
+			clause = appendAnd(clause);
+			if (direct) {
+				clause += targetTable + ".direct = '1'";
+			}
+			else {
+				clause += targetTable + ".direct = '0'";
+			}
+		}
+		else if (targetTable == "nexts") {
+			cout << "nexts" << endl;
+			if (isdigit(target[0])) {
+				clause = appendAnd(clause);
+				clause += targetTable + ".nextStmtNo = '" + target + "'";
+			}
+
+			clause = appendAnd(clause);
+			if (direct) {
+				clause += targetTable + ".direct = '1'";
+			}
+			else {
+				clause += targetTable + ".direct = '0'";
 			}
 		}
 	}
@@ -267,7 +279,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			}
 			else if (currToken == "Parent" && tokens.at(i + 1) == "*") {
 				isInCondition = true;
-				currToken += "*";
+				currToken += "*";D
 				string source = tokens.at(i + 3);
 				string target = tokens.at(i + 5);
 				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
@@ -276,11 +288,11 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			}
 			else if (currToken == "Next") {
 				isInCondition = true;
-				//string source = tokens.at(i + 2);
-				//string target = tokens.at(i + 4);
-				//cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
-				//joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, joinedTables);
-				//whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
+				string source = tokens.at(i + 2);
+				string target = tokens.at(i + 4);D
+				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
+				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, joinedTables);
+				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 
 			}
 			else if (currToken == "Next*") {
