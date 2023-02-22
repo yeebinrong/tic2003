@@ -46,7 +46,7 @@ void indirectNext(int topOfContainer, int stmtNum, vector<pair<string,int>> cont
 
 void indirectParent(int containerHead, int stmtNum) {
 	for (int i = stmtNum; i > containerHead; i--)
-		Database::insertParent(to_string(containerHead), to_string(i), "0");
+		Database::insertParent(to_string(i), to_string(containerHead), "0");
 }
 
 
@@ -111,7 +111,7 @@ void SourceProcessor::process(string program) {
 
 				curState = currToken;
 				containerList.emplace_back(curState, stmtNum);
-				Database::insertParent(to_string(containerList.back().second), to_string(stmtNum + 1), "1");
+				Database::insertParent(to_string(stmtNum + 1), to_string(containerList.back().second), "1");
 			}
 			//Handle Next & Parent Insert
 			cout << "this is curState:" << curState << prevStmtNum << endl;

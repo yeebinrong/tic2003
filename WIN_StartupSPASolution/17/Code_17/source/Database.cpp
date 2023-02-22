@@ -60,7 +60,7 @@ void Database::initialize() {
 
 	// drop the existing parent table (if any)
 	executeQuery("DROP TABLE IF EXISTS parents");
-	executeQuery("CREATE TABLE parents ( stmtNo VARCHAR(255), childStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, childStmtNo));");
+	executeQuery("CREATE TABLE parents ( stmtNo VARCHAR(255), parentStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, parentStmtNo));");
 
 	// drop/create the existing modifies table (if any)
 	executeQuery("DROP TABLE IF EXISTS modifies");
@@ -164,12 +164,12 @@ void Database::insertUses(string stmtNo, string procedureName, string target) {
 
 // method to insert a Next into the database
 void Database::insertNext(string stmtNo, string nextStmtNo, string direct) {
-	Database::executeQuery("INSERT INTO nexts ('stmtNo', 'nextStmtNo', 'direct') VALUES ('" + stmtNo + "', '" + nextStmtNo + "', '" + direct + "'); ");
+	Database::executeQuery(generateInsertQuery("nexts", { "stmtNo", "nextStmtNo", "direct" }, { stmtNo, nextStmtNo, direct }));
 }
 
 // method to insert a Parent into the database
-void Database::insertParent(string stmtNo, string childStmtNo, string direct) {
-	Database::executeQuery("INSERT INTO parents ('stmtNo', 'childStmtNo', 'direct') VALUES ('" + stmtNo + "', '" + childStmtNo + "', '" + direct + "'); ");
+void Database::insertParent(string stmtNo, string parentStmtNo, string direct) {
+	Database::executeQuery(generateInsertQuery("parents", { "stmtNo", "parentStmtNo", "direct" }, { stmtNo, parentStmtNo, direct }));
 }
 
 
