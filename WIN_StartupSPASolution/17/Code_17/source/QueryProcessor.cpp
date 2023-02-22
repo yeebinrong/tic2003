@@ -111,13 +111,23 @@ string formatTableName(string tableName) {
 }
 
 // appends the join clause
-string appendJoinClause(string clause, string targetTable, string mainSynonymType, vector<string> joinedTables) {
+string appendJoinClause(string clause, string targetTable, string mainSynonymType, string source, string target, map<string, string> declarationMap, vector<string> joinedTables) {
 	targetTable = formatTableName(targetTable);
-	mainSynonymType = formatTableName(mainSynonymType);
 	// these tables return statement number
 	if (!isValInVectTwo(joinedTables, targetTable) && isValInVectTwo({ "uses", "modifies", "pattern_table", "parents", "nexts"}, targetTable)) {
 		if (isValInVectTwo({"read", "print", "assign", "stmt", "while", "if_table"}, mainSynonymType)) {
 			clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".stmtNo = " + targetTable + ".stmtNo";
+			if (targetTable == "parents") {
+				// check parents target and source type and join accordingly
+				if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedTables, declarationMap[source])) {
+					clause += " INNER JOIN " + declarationMap[source] + " ON " + mainSynonymType + ".stmtNo = " + declarationMap[source] + ".stmtNo";
+					joinedTables.push_back(declarationMap[source]);
+				}
+				if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedTables, declarationMap[target])) {
+					clause += " INNER JOIN " + declarationMap[target] + " ON " + mainSynonymType + ".stmtNo = " + declarationMap[target] + ".stmtNo";
+					joinedTables.push_back(declarationMap[target]);
+				}
+			}
 		}
 		else if (mainSynonymType == "procedure") {
 			clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".name = " + targetTable + ".procedureName";
@@ -140,7 +150,6 @@ string appendJoinClause(string clause, string targetTable, string mainSynonymTyp
 string appendWhereClause(string clause, string targetTable, string mainSynonymType, string source, string target, map<string, string> declarationMap) {
 	bool direct = isDirect(targetTable);
 	targetTable = formatTableName(targetTable);
-	mainSynonymType = formatTableName(mainSynonymType);
 	// all synonym type except constant
 	if (isValInVectTwo({ "stmt", "read", "print", "assign", "while", "if_table", "variable", "procedure" }, mainSynonymType)) {
 		if (isdigit(source[0])) {
@@ -170,7 +179,8 @@ string appendWhereClause(string clause, string targetTable, string mainSynonymTy
 		if (targetTable == "parents") {
 			if (isdigit(target[0])) {
 				clause = appendAnd(clause);
-				clause += targetTable + ".childStmtNo = '" + target + "'";
+				// kiv parentStmtNo
+				clause += targetTable + ".parentStmtNo = '" + target + "'";
 			}
 
 			if (direct) {
@@ -253,7 +263,8 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 	vector<string> joinedTables;
 	bool isEndOfDeclaration = false;
 	// init synonym as tokens.at(0) as it is possible the expected column is not defined as a variable based on example
-	string mainSynonymType = tokens.at(0);
+	string mainSynonymType = formatTableName(tokens.at(0));
+	joinedTables.push_back(mainSynonymType);
 	bool isInCondition = false;
 	string joinClause = "";
 	string whereClause = "";
@@ -261,7 +272,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		string currToken = tokens.at(i);
 		if (isInCondition) {
 			if (currToken == ")") {
-				// end of condition logic has to been improved to consider patterns with brackets
+				// TODO: end of condition logic has to been improved to consider patterns with brackets
 				isInCondition = false;
 			}
 			continue;
@@ -272,7 +283,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				string source = tokens.at(i + 2);
 				string target = tokens.at(i + 4);
 				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
-				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, joinedTables);
+				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, source, target, declarationMap, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 			}
 			else if (currToken == "Parent" && tokens.at(i + 1) == "*") {
@@ -281,7 +292,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				string source = tokens.at(i + 3);
 				string target = tokens.at(i + 5);
 				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
-				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, joinedTables);
+				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, source, target, declarationMap, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 			}
 			else if (currToken == "Next") {
@@ -289,7 +300,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				string source = tokens.at(i + 2);
 				string target = tokens.at(i + 4);
 				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
-				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, joinedTables);
+				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, source, target, declarationMap, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 
 			}
@@ -300,7 +311,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				isInCondition = true;
 				string source = tokens.at(i + 2);
 				string target = tokens.at(i + 5);
-				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, joinedTables);
+				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, source, target, declarationMap, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 			}
 			else if (currToken == "pattern") {
@@ -316,12 +327,12 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				}
 				// target can be _ (match all) or "variable name" (exact match) or _"variable"_ (partial match)
 				string target = checkExactOrPartialMatch(offset, tokens);
-				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, joinedTables);
+				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, source, target, declarationMap, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 			}
 		} else if (currToken == ";") {
 			// new declaration, insert as { name : synonymType }
-			declarationMap.insert({ tokens.at(i - 1), tokens.at(i - 2) });
+			declarationMap.insert({ tokens.at(i - 1), formatTableName(tokens.at(i - 2)) });
 		} else if (currToken == "Select") {
 			// Map the expected column if exists, else use default
 			if (isValInMap(declarationMap, tokens.at(i + 1))) {
