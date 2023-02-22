@@ -65,6 +65,13 @@ public:
 	// method to insert uses into the database
 	static void insertUses(string stmtno, string procedureName, string target);
 
+	// method to insert a Next into the database
+	static void insertNext(string stmtNo, string nextStmtNo, string direct);
+
+		// method to insert a Parent into the database
+	static void insertParent(string stmtNo, string childStmtNo, string direct );
+
+
 	static void getQueryResults(vector<string>& results, string query);
 
 private:

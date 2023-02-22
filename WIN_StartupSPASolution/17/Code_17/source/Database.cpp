@@ -54,6 +54,14 @@ void Database::initialize() {
 	executeQuery("DROP TABLE IF EXISTS pattern_table");
 	executeQuery("CREATE TABLE pattern_table ( stmtNo VARCHAR(255), source VARCHAR(255), target VARCHAR(255), PRIMARY KEY (stmtNo, source, target));");
 
+	// drop the existing next table (if any)
+	executeQuery("DROP TABLE IF EXISTS nexts");
+	executeQuery("CREATE TABLE nexts ( stmtNo VARCHAR(255), nextStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, nextStmtNo)); ");
+
+	// drop the existing parent table (if any)
+	executeQuery("DROP TABLE IF EXISTS parents");
+	executeQuery("CREATE TABLE parents ( stmtNo VARCHAR(255), childStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, childStmtNo));");
+
 	// drop/create the existing modifies table (if any)
 	executeQuery("DROP TABLE IF EXISTS modifies");
 	executeQuery("CREATE TABLE modifies ( stmtNo VARCHAR(255), procedureName VARCHAR(255), target VARCHAR(255), PRIMARY KEY (stmtNo, procedureName, target))");
@@ -154,6 +162,17 @@ void Database::insertUses(string stmtNo, string procedureName, string target) {
 	Database::executeQuery(generateInsertQuery("uses", { "stmtNo", "procedureName", "target" }, { stmtNo, procedureName, target }));
 }
 
+// method to insert a Next into the database
+void Database::insertNext(string stmtNo, string nextStmtNo, string direct) {
+	Database::executeQuery("INSERT INTO nexts ('stmtNo', 'nextStmtNo', 'direct') VALUES ('" + stmtNo + "', '" + nextStmtNo + "', '" + direct + "'); ");
+}
+
+// method to insert a Parent into the database
+void Database::insertParent(string stmtNo, string childStmtNo, string direct) {
+	Database::executeQuery("INSERT INTO parents ('stmtNo', 'childStmtNo', 'direct') VALUES ('" + stmtNo + "', '" + childStmtNo + "', '" + direct + "'); ");
+}
+
+
 void Database::executeQueryAndMapResults(vector<string>& results, string query) {
 	// clear the existing results
 	dbResults.clear();
@@ -205,6 +224,7 @@ void Database::getReads(vector<string>& results) {
 void Database::getStmts(vector<string>& results) {
 	Database::executeQueryAndMapResults(results, "SELECT stmtNo FROM stmt;");
 }
+
 
 // callback method to put one row of results from the database into the dbResults vector
 // This method is called each time a row of results is returned from the database
