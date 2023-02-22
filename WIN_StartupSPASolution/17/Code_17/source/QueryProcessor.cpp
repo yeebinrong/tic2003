@@ -98,7 +98,7 @@ string formatTableName(string tableName) {
 		return "pattern_table";
 	}
 	else if (tableName == "Parent" || tableName == "Parent*") {
-		return "parent";
+		return "parents";
 	}
 	else if (tableName == "Next" || tableName == "Next*") {
 		return "nexts";
@@ -173,13 +173,11 @@ string appendWhereClause(string clause, string targetTable, string mainSynonymTy
 				clause += targetTable + ".childStmtNo = '" + target + "'";
 			}
 
-			clause = appendAnd(clause);
 			if (direct) {
+				clause = appendAnd(clause);
 				clause += targetTable + ".direct = '1'";
 			}
-			else {
-				clause += targetTable + ".direct = '0'";
-			}
+
 		}
 		else if (targetTable == "nexts") {
 			cout << "nexts" << endl;
@@ -188,13 +186,11 @@ string appendWhereClause(string clause, string targetTable, string mainSynonymTy
 				clause += targetTable + ".nextStmtNo = '" + target + "'";
 			}
 
-			clause = appendAnd(clause);
 			if (direct) {
+				clause = appendAnd(clause);
 				clause += targetTable + ".direct = '1'";
 			}
-			else {
-				clause += targetTable + ".direct = '0'";
-			}
+
 		}
 	}
 	return clause;

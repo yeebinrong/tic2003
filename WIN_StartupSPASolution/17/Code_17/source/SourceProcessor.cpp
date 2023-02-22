@@ -72,8 +72,9 @@ void SourceProcessor::process(string program) {
 	//@@@ init @@@//
 	int stmtNum = 0; //statement increment
 	int prevStmtNum = 0; //statement-1 + skip 0->1
-	vector<int> lastIfNum;
+	//vector<int> lastIfNum;
 	//int containerStmtNum = 0; //reference statement number for container (if/while)
+	bool skip = false; //skip next-stmt btween if and else
 	string prevState = "main";
 	string curState = "main"; //main, if, else, while
 	bool isInExpr = false;
@@ -110,9 +111,11 @@ void SourceProcessor::process(string program) {
 
 				curState = currToken;
 				containerList.emplace_back(curState, stmtNum);
+				Database::insertParent(to_string(containerList.back().second), to_string(stmtNum + 1), "1");
 			}
 			//Handle Next & Parent Insert
-			if (prevStmtNum && curState != "skip") {
+			cout << "this is curState:" << curState << prevStmtNum << endl;
+			if (prevStmtNum && !skip) {
 				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
 
 				if (curState == "else") {
@@ -130,16 +133,13 @@ void SourceProcessor::process(string program) {
 
 				if (curState != "main") {
 					if (containerList.back().second != stmtNum) {
-						cout << "this is parent: " << containerList.back().first << endl;
+						//Database::insertParent(containerList.back().first, to_string(stmtNum), "1");
 						Database::insertParent(to_string(containerList.back().second), to_string(stmtNum), "1");
 					}
 				}
 			}
-			else if (curState == "skip") { //Handle when transiting to else
-				curState = "else";
-				Database::insertNext(to_string(containerList.back().second), to_string(stmtNum), "1");
-				Database::insertParent(to_string(containerList.back().second), to_string(stmtNum), "1");
-				//containerList.emplace_back(curState, stmtNum);
+			else {
+				skip = false;
 			}
 		}
 		else if (currToken == "}") { //handle end of container, update container state
@@ -150,22 +150,28 @@ void SourceProcessor::process(string program) {
 				//	indirectNext(stmtNum, i, containerList); //working
 				//}
 				indirectParent(containerList.back().second, stmtNum);
-				int prevContHead = containerList.back().second;
 				containerList.pop_back();
 				curState = containerList.back().first;
 			}
 			else if (curState == "if") {
+				skip = true;
+				Database::insertNext(to_string(containerList.back().second), to_string(stmtNum+1), "1");
+				//tabase::insertParent(containerList.back().first, to_string(stmtNum + 1), "1");
+				Database::insertParent(to_string(containerList.back().second), to_string(stmtNum+1), "1");
 				prevState = curState;
-				curState = "skip";
-				lastIfNum.push_back(stmtNum);
-
+				curState = "else";
+				int prevContHead = containerList.back().second;
+				containerList.pop_back();
+				containerList.emplace_back(curState, prevContHead);
+				//lastIfNum.push_back(stmtNum);
+				
 			}
 			else if (curState == "else") {
 				prevState = curState;
 				//containerList.pop_back();
 				//insert next if -> out of container
 				indirectParent(containerList.back().second, stmtNum);
-				int prevContHead = containerList.back().second;
+				//int prevContHead = containerList.back().second;
 				containerList.pop_back();
 				curState = containerList.back().first;
 			}
