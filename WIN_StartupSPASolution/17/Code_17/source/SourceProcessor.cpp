@@ -96,19 +96,21 @@ void SourceProcessor::process(string program) {
 			prevStmtNum = stmtNum;
 			stmtNum++;
 			Database::insertStmt(to_string(stmtNum));
-///////////////////////////////////////////////////////////////////////////
+
 			//Update container state (if/while/main)
 			if (isValInVect(containers, "while")) {
 				Database::insertWhile(to_string(stmtNum));
-				curState = currToken;
-				containerList.emplace_back(curState, stmtNum);
-			}
-			if (isValInVect(containers, "if")) {
-				Database::insertIf(to_string(stmtNum));
-				curState = currToken;
-				containerList.emplace_back(curState, stmtNum);
 			}
 
+			if (isValInVect(containers, "if")) {
+				Database::insertIf(to_string(stmtNum));
+			}
+			///////////////////////////////////////////////////////////////////////////
+			if (isValInVect({ "if" , "while" }, currToken)) {
+
+				curState = currToken;
+				containerList.emplace_back(curState, stmtNum);
+			}
 			//Handle Next & Parent Insert
 			if (prevStmtNum && curState != "skip") {
 				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
@@ -128,6 +130,7 @@ void SourceProcessor::process(string program) {
 
 				if (curState != "main") {
 					if (containerList.back().second != stmtNum) {
+						cout << "this is parent: " << containerList.back().first << endl;
 						Database::insertParent(to_string(containerList.back().second), to_string(stmtNum), "1");
 					}
 				}
@@ -136,7 +139,7 @@ void SourceProcessor::process(string program) {
 				curState = "else";
 				Database::insertNext(to_string(containerList.back().second), to_string(stmtNum), "1");
 				Database::insertParent(to_string(containerList.back().second), to_string(stmtNum), "1");
-				containerList.emplace_back(curState, stmtNum);
+				//containerList.emplace_back(curState, stmtNum);
 			}
 		}
 		else if (currToken == "}") { //handle end of container, update container state
@@ -146,6 +149,7 @@ void SourceProcessor::process(string program) {
 				//for (int i = stmtNum; i >= containerList.back().second; i--) {
 				//	indirectNext(stmtNum, i, containerList); //working
 				//}
+				indirectParent(containerList.back().second, stmtNum);
 				int prevContHead = containerList.back().second;
 				containerList.pop_back();
 				curState = containerList.back().first;
@@ -158,8 +162,9 @@ void SourceProcessor::process(string program) {
 			}
 			else if (curState == "else") {
 				prevState = curState;
-				containerList.pop_back();
+				//containerList.pop_back();
 				//insert next if -> out of container
+				indirectParent(containerList.back().second, stmtNum);
 				int prevContHead = containerList.back().second;
 				containerList.pop_back();
 				curState = containerList.back().first;
