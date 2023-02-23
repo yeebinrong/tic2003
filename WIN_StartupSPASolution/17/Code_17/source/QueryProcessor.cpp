@@ -82,7 +82,7 @@ string appendMainClause(string clause, string mainSynonymType) {
 		clause += "variable.name FROM variable ";
 	}
 	else if (mainSynonymType == "constant") {
-		clause += "constant.value FROM constant ";
+		clause += "DISTINCT constant.value FROM constant ";
 	}
 	else if (isValInVectTwo({ "assign", "print", "read", "stmt", "while", "if" }, mainSynonymType)) {
 		clause += mainSynonymType + ".stmtNo FROM " + mainSynonymType + " ";
@@ -115,7 +115,7 @@ string appendJoinClause(string clause, string targetTable, string mainSynonymTyp
 	targetTable = formatTableName(targetTable);
 	// these tables return statement number
 	if (!isValInVectTwo(joinedTables, targetTable) && isValInVectTwo({ "uses", "modifies", "pattern_table", "parents", "nexts"}, targetTable)) {
-		if (isValInVectTwo({"read", "print", "assign", "stmt", "while", "if_table"}, mainSynonymType)) {
+		if (isValInVectTwo({"read", "print", "assign", "stmt", "while", "if_table", "constant" }, mainSynonymType)) {
 			clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".stmtNo = " + targetTable + ".stmtNo";
 			if (targetTable == "parents") {
 				// check parents target and source type and join accordingly
@@ -135,10 +135,6 @@ string appendJoinClause(string clause, string targetTable, string mainSynonymTyp
 		else if (mainSynonymType == "variable") {
 			clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".name = " + targetTable + ".target";
 		}
-		else if (mainSynonymType == "constant") {
-			// constant never used, digit referenced is always stmtno in clauses
-			throw invalid_argument("unexpected constant type tgt w modifies / uses / pattern.");
-		}
 		else {
 			throw invalid_argument("unexpected synonym type: " + mainSynonymType);
 		}
@@ -152,7 +148,7 @@ string appendWhereClause(string clause, string targetTable, string mainSynonymTy
 	targetTable = formatTableName(targetTable);
 	// all synonym type except constant
 	if (isValInVectTwo({ "stmt", "read", "print", "assign", "while", "if_table", "variable", "procedure" }, mainSynonymType)) {
-		if (isdigit(source[0])) {
+		if (isdigit(source[0]) && targetTable != "parents") {
 			clause = appendAnd(clause);
 			clause += targetTable + ".stmtNo = " + "'" + source + "'";
 		}
@@ -177,30 +173,18 @@ string appendWhereClause(string clause, string targetTable, string mainSynonymTy
 			}
 		}
 		if (targetTable == "parents") {
+			if (isdigit(source[0])) {
+				clause = appendAnd(clause);
+				clause += targetTable + ".parentStmtNo = '" + source + "'";
+			}
 			if (isdigit(target[0])) {
 				clause = appendAnd(clause);
-				// kiv parentStmtNo
 				clause += targetTable + ".parentStmtNo = '" + target + "'";
 			}
-
 			if (direct) {
 				clause = appendAnd(clause);
 				clause += targetTable + ".direct = '1'";
 			}
-
-		}
-		else if (targetTable == "nexts") {
-			cout << "nexts" << endl;
-			if (isdigit(target[0])) {
-				clause = appendAnd(clause);
-				clause += targetTable + ".nextStmtNo = '" + target + "'";
-			}
-
-			if (direct) {
-				clause = appendAnd(clause);
-				clause += targetTable + ".direct = '1'";
-			}
-
 		}
 	}
 	return clause;
@@ -282,7 +266,6 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				isInCondition = true;
 				string source = tokens.at(i + 2);
 				string target = tokens.at(i + 4);
-				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
 				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, source, target, declarationMap, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 			}
@@ -291,7 +274,6 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				currToken += "*";
 				string source = tokens.at(i + 3);
 				string target = tokens.at(i + 5);
-				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
 				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, source, target, declarationMap, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 			}
@@ -299,7 +281,6 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				isInCondition = true;
 				string source = tokens.at(i + 2);
 				string target = tokens.at(i + 4);
-				cout << "source: " << source << " target: " << target << " type: " << currToken << endl;
 				joinClause = appendJoinClause(joinClause, currToken, mainSynonymType, source, target, declarationMap, joinedTables);
 				whereClause = appendWhereClause(whereClause, currToken, mainSynonymType, source, target, declarationMap);
 

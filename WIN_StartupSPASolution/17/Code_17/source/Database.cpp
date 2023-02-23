@@ -24,7 +24,7 @@ void Database::initialize() {
 
 	// drop/create the existing constant table (if any)
 	executeQuery("DROP TABLE IF EXISTS constant");
-	executeQuery("CREATE TABLE constant ( value VARCHAR(255) PRIMARY KEY);");
+	executeQuery("CREATE TABLE constant ( value VARCHAR(255), stmtNo VARCHAR(255), PRIMARY KEY(value, stmtNo));");
 
 	// drop/create the existing assign table (if any)
 	executeQuery("DROP TABLE IF EXISTS assign");
@@ -109,12 +109,12 @@ void Database::insertProcedure(string name)
 
 // method to insert a Variable into the database
 void Database::insertVariable(string name) {
-	Database::executeQuery(generateInsertQuery("variable", { "procedureName" }, { name }));
+	Database::executeQuery(generateInsertQuery("variable", { "name" }, { name }));
 }
 
 // method to insert a Constant into the database
-void Database::insertConstant(string value) {
-	Database::executeQuery(generateInsertQuery("constant", { "value" }, { value }));
+void Database::insertConstant(string value, string stmtNo) {
+	Database::executeQuery(generateInsertQuery("constant", { "value", "stmtNo" }, {value, stmtNo}));
 }
 
 // method to insert a Assignment into the database
