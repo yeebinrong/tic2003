@@ -24,7 +24,7 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 				}
 			}
 			else if (isdigit(offsetToken[0])) {
-				Database::insertConstant(offsetToken);
+				Database::insertConstant(offsetToken, to_string(stmtNum));
 			}
 		}
 		offset += 1;
@@ -33,22 +33,15 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 	Database::insertPattern(to_string(stmtNum), tokens.at(currIdx), concatStr);
 }
 
-// method to flood insert Next*
-void indirectNext(int topOfContainer, int stmtNum, vector<pair<string,int>> container) {
-		for (int x = stmtNum-1; x >= topOfContainer; x--) {
-			Database::insertNext(to_string(x), to_string(stmtNum), "0");
+void insertForAllContainer(vector<pair<string, int>> containerList, int stmtNum) {
+	for (int i = containerList.size() - 1; i > 0; i -= 1) {
+		string direct = "1";
+		if (i != containerList.size() - 1) {
+			direct = "0";
 		}
-		if (container.back().first == "else") {
-			container.pop_back();
-			Database::insertNext(to_string(container.back().second), to_string(stmtNum), "0");
-		}
+		Database::insertParent(to_string(stmtNum), to_string(containerList[i].second), direct);
+	}
 }
-
-void indirectParent(int containerHead, int stmtNum) {
-	for (int i = stmtNum; i > containerHead; i--)
-		Database::insertParent(to_string(i), to_string(containerHead), "0");
-}
-
 
 // method for processing the source program
 // This method currently only inserts the procedure name into the database
@@ -72,15 +65,13 @@ void SourceProcessor::process(string program) {
 	//@@@ init @@@//
 	int stmtNum = 0; //statement increment
 	int prevStmtNum = 0; //statement-1 + skip 0->1
-	//vector<int> lastIfNum;
-	//int containerStmtNum = 0; //reference statement number for container (if/while)
 	bool skip = false; //skip next-stmt btween if and else
 	string prevState = "main";
 	string curState = "main"; //main, if, else, while
 	bool isInExpr = false;
 	
 	vector<pair<string, int>> containerList;
-	containerList.emplace_back("main", 1);
+	containerList.push_back({ "main", 1 });
 	
 	vector<string> containers;
 	// iterate subsequent statements for variable/constant
@@ -88,8 +79,9 @@ void SourceProcessor::process(string program) {
 
 		string prevToken = tokens.at(i - 1);
 		string currToken = tokens.at(i);
-		if (containers.size() > 0 && currToken == "}") {
+		if (containers.size() > 0 && currToken == "}" && containers[containers.size() - 1] != "if") {
 			containers.pop_back();
+			containerList.pop_back();
 		}
 		if (isValInVect({"{", ";", "}"}, prevToken) &&
 			!isValInVect({"}", "else"}, currToken)
@@ -98,7 +90,7 @@ void SourceProcessor::process(string program) {
 			stmtNum++;
 			Database::insertStmt(to_string(stmtNum));
 
-			//Update container state (if/while/main)
+			// insert nested while / if statements
 			if (isValInVect(containers, "while")) {
 				Database::insertWhile(to_string(stmtNum));
 			}
@@ -106,77 +98,8 @@ void SourceProcessor::process(string program) {
 			if (isValInVect(containers, "if")) {
 				Database::insertIf(to_string(stmtNum));
 			}
-			///////////////////////////////////////////////////////////////////////////
-			if (isValInVect({ "if" , "while" }, currToken)) {
-
-				curState = currToken;
-				containerList.emplace_back(curState, stmtNum);
-				Database::insertParent(to_string(stmtNum + 1), to_string(containerList.back().second), "1");
-			}
-			//Handle Next & Parent Insert
-			cout << "this is curState:" << curState << prevStmtNum << endl;
-			if (prevStmtNum && !skip) {
-				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
-
-				if (curState == "else") {
-					indirectNext(containerList.back().second, stmtNum, containerList); //888
-				}
-				else {
-					//Handle while-loop self-next
-					if (curState == "while") {
-						Database::insertNext(to_string(stmtNum), to_string(stmtNum), "0"); //
-					}
-					else { //curState == "if" or "main"
-						indirectNext(containerList.back().second, stmtNum, containerList); //888
-					}
-				}
-
-				if (curState != "main") {
-					if (containerList.back().second != stmtNum) {
-						//Database::insertParent(containerList.back().first, to_string(stmtNum), "1");
-						Database::insertParent(to_string(containerList.back().second), to_string(stmtNum), "1");
-					}
-				}
-			}
-			else {
-				skip = false;
-			}
+			insertForAllContainer(containerList, stmtNum);
 		}
-		else if (currToken == "}") { //handle end of container, update container state
-			if (curState == "while") {
-				prevState = curState;
-				Database::insertNext(to_string(stmtNum), to_string(containerList.back().second), "1"); //while loop
-				//for (int i = stmtNum; i >= containerList.back().second; i--) {
-				//	indirectNext(stmtNum, i, containerList); //working
-				//}
-				indirectParent(containerList.back().second, stmtNum);
-				containerList.pop_back();
-				curState = containerList.back().first;
-			}
-			else if (curState == "if") {
-				skip = true;
-				Database::insertNext(to_string(containerList.back().second), to_string(stmtNum+1), "1");
-				//tabase::insertParent(containerList.back().first, to_string(stmtNum + 1), "1");
-				Database::insertParent(to_string(containerList.back().second), to_string(stmtNum+1), "1");
-				prevState = curState;
-				curState = "else";
-				int prevContHead = containerList.back().second;
-				containerList.pop_back();
-				containerList.emplace_back(curState, prevContHead);
-				//lastIfNum.push_back(stmtNum);
-				
-			}
-			else if (curState == "else") {
-				prevState = curState;
-				//containerList.pop_back();
-				//insert next if -> out of container
-				indirectParent(containerList.back().second, stmtNum);
-				//int prevContHead = containerList.back().second;
-				containerList.pop_back();
-				curState = containerList.back().first;
-			}
-		}
-////////////////////////////////////////////////////////////////////////////
 		if (isValInVect({ "{", "then", ";" }, currToken)) {
 			isInExpr = false;
 		}
@@ -184,15 +107,20 @@ void SourceProcessor::process(string program) {
 			// move to next iteration till end of expr
 			continue;
 		}
+		// ------------------------------------------------------------------------
+		// Note. All additional logic should start after this line
+		// ------------------------------------------------------------------------
 		if (isValInVect({"while", "if"}, currToken)) {
 			if (currToken == "while") {
 				Database::insertWhile(to_string(stmtNum));
-				containers.push_back("while");
 			}
 			else if (currToken == "if") {
 				Database::insertIf(to_string(stmtNum));
-				containers.push_back("if");
 			}
+			insertForAllContainer(containerList, stmtNum);
+			containers.push_back(currToken);
+			containerList.push_back({ currToken, stmtNum });
+			Database::insertParent(to_string(stmtNum + 1), to_string(stmtNum), "1");
 			isInExpr = true;
 			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName);
 		}

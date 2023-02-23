@@ -31,7 +31,7 @@ public:
 	static void getVariables(vector<string>& results);
 
 	// method to insert/get a Constant into the database
-	static void insertConstant(string constantName);
+	static void insertConstant(string constantName, string stmtNo);
 	static void getConstants(vector<string>& results);
 
 	// method to insert/get a Assignment into the database
