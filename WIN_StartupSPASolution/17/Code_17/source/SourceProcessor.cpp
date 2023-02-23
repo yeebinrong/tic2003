@@ -64,10 +64,6 @@ void SourceProcessor::process(string program) {
 
 	//@@@ init @@@//
 	int stmtNum = 0; //statement increment
-	int prevStmtNum = 0; //statement-1 + skip 0->1
-	bool skip = false; //skip next-stmt btween if and else
-	string prevState = "main";
-	string curState = "main"; //main, if, else, while
 	bool isInExpr = false;
 	
 	vector<pair<string, int>> containerList;
@@ -86,7 +82,6 @@ void SourceProcessor::process(string program) {
 		if (isValInVect({"{", ";", "}"}, prevToken) &&
 			!isValInVect({"}", "else"}, currToken)
 		) {
-			prevStmtNum = stmtNum;
 			stmtNum++;
 			Database::insertStmt(to_string(stmtNum));
 
