@@ -51,10 +51,10 @@ public:
 	static void getStmts(vector<string>& results);
 
 	// method to insert a if into the database
-	static void insertIf(string stmtno, string isParent);
+	static void insertIf(string stmtno, string isParent, string parentStmtNo, string direct);
 
 	// method to insert a while into the database
-	static void insertWhile(string stmtno, string isParent);
+	static void insertWhile(string stmtno, string isParent, string parentStmtNo, string direct);
 
 	// method to insert a pattern into the database
 	static void insertPattern(string stmtNo, string source, string target);
