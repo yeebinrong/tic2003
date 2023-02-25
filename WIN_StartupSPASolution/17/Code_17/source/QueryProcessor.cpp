@@ -24,7 +24,7 @@ bool isValInVectTwo(vector<string> vector, string value) {
 	return std::find(vector.begin(), vector.end(), value) != vector.end();
 }
 
-bool isValInMap(map<string, pair<string, string>> m, string value) {
+bool isValInMap(map<string, string> m, string value) {
 	if (m.find(value) == m.end()) {
 		return false;
 	}
@@ -60,15 +60,15 @@ string checkAndReplaceLike(string str) {
 	return removeWhiteSpace(str);
 }
 
-string appendPatternClause(string clause, string column, string value) {
+string appendPatternClause(string clause, string tableName, string column, string value) {
 	if (value != "_") {
 		clause = appendAnd(clause);
 		if (isExactMatch(value)) {
-			clause += "pattern_table." + column + " = '" + removeWhiteSpace(value) + "'";
+			clause += tableName + "." + column + " = '" + removeWhiteSpace(value) + "'";
 		}
 		else {
 			value = checkAndReplaceLike(value);
-			clause += "pattern_table." + column + " LIKE '" + value + "'";
+			clause += tableName + "." + column + " LIKE '" + value + "'";
 		}
 	}
 	return clause;
@@ -110,92 +110,39 @@ string formatTableName(string tableName) {
 	return tableName;
 }
 
-bool isNotWhileOrIfOrParent(map<string, pair<string, string>> declarationMap, string value) {
-	return isValInMap(declarationMap, value) && !isValInVectTwo({ "while", "if_table", "Parent", "Parent*", "if" }, declarationMap[value].first);
+bool isNotWhileOrIf(map<string, string> declarationMap, string value) {
+	return isValInMap(declarationMap, value) && !isValInVectTwo({ "while", "if_table" }, declarationMap[value]);
 }
 
-// appends the join clause
-string appendJoinClause(
-	string clause, string targetTable, string mainSynonymType, string source, string target, map<string,
-	pair<string, string>> declarationMap, vector<string> parentDeclarationVect, vector<string> joinedTables
-) {
+string appendWhereClause(string clause, string targetTable, string mainSynonymType, string source, string target, map<string, string> declarationMap, bool useAlias, bool direct) {
 	targetTable = formatTableName(targetTable);
-	// these tables return statement number
-	if (!isValInVectTwo(joinedTables, targetTable) && isValInVectTwo({ "uses", "modifies", "pattern_table", "parents", "nexts"}, targetTable)) {
-		if (isValInVectTwo({"read", "print", "assign", "stmt", "while", "if_table", "constant" }, mainSynonymType)) {
-			if (targetTable == "parents") {
-				if (isValInVectTwo({ "while", "if_table" }, mainSynonymType) && (isNotWhileOrIfOrParent(declarationMap, source) || isNotWhileOrIfOrParent(declarationMap, target))) {
-					clause += "INNER JOIN (SELECT * FROM " + targetTable;
-					if (isNotWhileOrIfOrParent(declarationMap, source)) {
-						clause += " INNER JOIN " + declarationMap[source].second + " ON parents.stmtNo = " + declarationMap[source].second + ".stmtNo";
-						joinedTables.push_back(declarationMap[source].first);
-						parentDeclarationVect.push_back(source);
-					}
-					if (isNotWhileOrIfOrParent(declarationMap, target)) {
-						clause += " INNER JOIN " + declarationMap[target].second + " ON parents.stmtNo = " + declarationMap[target].second + ".stmtNo";
-						joinedTables.push_back(declarationMap[target].first);
-						parentDeclarationVect.push_back(target);
-					}
-					clause += ") as " + target + " ON " + mainSynonymType + ".stmtNo = " + target + ".parentStmtNo";
-					declarationMap[target].second = target;
-				}
-				else {
-					// check parents target and source type and join accordingly
-					if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedTables, declarationMap[source].first)) {
-						clause += " INNER JOIN " + declarationMap[source].second + " ON " + mainSynonymType + ".stmtNo = " + declarationMap[source].second + ".stmtNo";
-						joinedTables.push_back(declarationMap[source].first);
-					}
-					if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedTables, declarationMap[target].first)) {
-						clause += " INNER JOIN " + declarationMap[target].second + " ON " + mainSynonymType + ".stmtNo = " + declarationMap[target].second + ".stmtNo";
-						joinedTables.push_back(declarationMap[target].first);
-					}
-					clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".stmtNo = " + targetTable + ".stmtNo";
-				}
-			}
-			else {
-				clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".stmtNo = " + targetTable + ".stmtNo";
-			}
-		}
-		else if (mainSynonymType == "procedure") {
-			clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".name = " + targetTable + ".procedureName";
-		}
-		else if (mainSynonymType == "variable") {
-			clause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".name = " + targetTable + ".target";
-		}
-		else {
-			throw invalid_argument("unexpected synonym type: " + mainSynonymType);
-		}
-		joinedTables.push_back(targetTable);
+	string aliasTable = targetTable;
+	if (useAlias) {
+		aliasTable = "temp_" + targetTable + "_" + source + target;
 	}
-	return clause;
-}
-
-string appendWhereClause(string clause, string targetTable, string mainSynonymType, string source, string target, map<string, pair<string, string>> declarationMap) {
-	bool direct = isDirect(targetTable);
-	targetTable = formatTableName(targetTable);
 	if (isValInVectTwo({ "stmt", "read", "print", "assign", "while", "if_table", "variable", "procedure" }, mainSynonymType)) {
 		if (isdigit(source[0]) && targetTable != "parents") {
 			clause = appendAnd(clause);
-			clause += targetTable + ".stmtNo = " + "'" + source + "'";
+			clause += aliasTable + ".stmtNo = " + "'" + source + "'";
 		}
 		else {
 			if (targetTable == "pattern_table") {
-				clause = appendPatternClause(clause, "source", source);
-				clause = appendPatternClause(clause, "target", target);
+				clause = appendPatternClause(clause, aliasTable, "source", source);
+				clause = appendPatternClause(clause, aliasTable, "target", target);
 			}
 			else {
-				if (isValInMap(declarationMap, source) && declarationMap[source].first == "procedure") {
+				if (isValInMap(declarationMap, source) && declarationMap[source] == "procedure") {
 					clause = appendAnd(clause);
-					clause += targetTable + ".procedureName = '" + source + "'";
+					clause += aliasTable + ".procedureName = '" + source + "'";
 				}
 				if (isValInVectTwo({ "uses", "modifies" }, targetTable)) {
 					if (isdigit(source[0])) {
 						clause = appendAnd(clause);
-						clause += targetTable + ".stmtNo = '" + source + "'";
+						clause += aliasTable + ".stmtNo = '" + source + "'";
 					}
 					else if (!isValInMap(declarationMap, target)) {
 						clause = appendAnd(clause);
-						clause += targetTable + ".target = '" + target + "'";
+						clause += aliasTable + ".target = '" + target + "'";
 					}
 				}
 			}
@@ -203,15 +150,15 @@ string appendWhereClause(string clause, string targetTable, string mainSynonymTy
 		if (targetTable == "parents") {
 			if (isdigit(source[0])) {
 				clause = appendAnd(clause);
-				clause += targetTable + ".parentStmtNo = '" + source + "'";
+				clause += aliasTable + ".parentStmtNo = '" + source + "'";
 			}
 			if (isdigit(target[0])) {
 				clause = appendAnd(clause);
-				clause += targetTable + ".parentStmtNo = '" + target + "'";
+				clause += aliasTable + ".parentStmtNo = '" + target + "'";
 			}
 			if (direct) {
 				clause = appendAnd(clause);
-				clause += targetTable + ".direct = '1'";
+				clause += aliasTable + ".direct = '1'";
 			}
 		}
 	}
@@ -271,7 +218,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 	// create a vector for storing the results from database
 	vector<string> databaseResults;
 
-	map<string, pair<string, string>> declarationMap; // { name : { synonymType : synonymTypeAlias } }
+	map<string, string> declarationMap; // { name : synonymType }
 	vector<pair<string, vector<string>>> typeToArgList; // vector : [ synonymType : { source : target }]
 	vector<string> joinedTables;
 	bool isEndOfDeclaration = false;
@@ -339,19 +286,18 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		}
 		else if (currToken == ";") {
 			// new declaration, insert as { name : { synonymType : synonymTypeAlias } }
-			declarationMap.insert({ tokens.at(i - 1), { formatTableName(tokens.at(i - 2)), formatTableName(tokens.at(i - 2)) } });
+			declarationMap.insert({ tokens.at(i - 1), formatTableName(tokens.at(i - 2)) });
 		}
 		else if (currToken == "Select") {
 			// Map the expected column if exists, else use default
 			if (isValInMap(declarationMap, tokens.at(i + 1))) {
-				mainSynonymType = declarationMap.at(tokens.at(i + 1)).first;
+				mainSynonymType = declarationMap.at(tokens.at(i + 1));
 			}
 			joinedTables.push_back(mainSynonymType);
 			// End of declaration, start parsing query
 			isEndOfDeclaration = true;
 		}
 	}
-
 
 	string joinClause = "";
 	string whereClause = "";
@@ -372,7 +318,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			vector<int> parentRefIndex;
 			for (int j = 0; j < typeToArgList.size(); j += 1) {
 				// not current index and not mapped
-				if (j != i && !isValInVectTwo(mappedIndex, to_string(j)) && formatTableName(typeToArgList[j].first) != "parents") {
+				if (j != i && !isValInVectTwo(mappedIndex, to_string(j))) {
 					for (string ref : typeToArgList[j].second) {
 						if (ref == source || ref == target) {
 							parentRefIndex.push_back(j);
@@ -383,33 +329,69 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			}
 			if (!isValInVectTwo({ "while", "if_table" }, mainSynonymType) && parentRefIndex.size() == 0) {
 				// check parents target and source type and join accordingly
-				if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedTables, declarationMap[source].first)) {
-					joinClause += " INNER JOIN " + declarationMap[source].second + " ON " + mainSynonymType + ".stmtNo = " + declarationMap[source].second + ".stmtNo";
+				if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedTables, declarationMap[source])) {
+					joinClause += " INNER JOIN " + declarationMap[source] + " ON " + mainSynonymType + ".stmtNo = " + declarationMap[source] + ".stmtNo";
 				}
-				if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedTables, declarationMap[target].first)) {
-					joinClause += " INNER JOIN " + declarationMap[target].second + " ON " + mainSynonymType + ".stmtNo = " + declarationMap[target].second + ".stmtNo";
+				if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedTables, declarationMap[target])) {
+					joinClause += " INNER JOIN " + declarationMap[target] + " ON " + mainSynonymType + ".stmtNo = " + declarationMap[target] + ".stmtNo";
 				}
 				joinClause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".stmtNo = " + targetTable + ".stmtNo";
-				whereClause = appendWhereClause(whereClause, unformattedTargetTable, mainSynonymType, source, target, declarationMap);
+				bool direct = isDirect(unformattedTargetTable);
+				whereClause = appendWhereClause(whereClause, unformattedTargetTable, mainSynonymType, source, target, declarationMap, false, direct);
 			}
 			else {
-				joinClause += "INNER JOIN (SELECT * FROM " + targetTable;
-				if (isNotWhileOrIfOrParent(declarationMap, source)) {
-					joinClause += " INNER JOIN " + declarationMap[source].second + " ON parents.stmtNo = " + declarationMap[source].second + ".stmtNo";
+				map<string, string> mappedVariables;
+				if (isValInMap(declarationMap, source) && !isValInVectTwo({ "while", "if_table" }, mainSynonymType) && isValInVectTwo({"while", "if_table"}, declarationMap[source])) {
+					mappedVariables.insert({ source, declarationMap[source] });
+					targetTable = declarationMap[source];
+				} else if (isValInMap(declarationMap, target) && !isValInVectTwo({ "while", "if_table" }, mainSynonymType) && isValInVectTwo({ "while", "if_table" }, declarationMap[target])) {
+					mappedVariables.insert({ source, declarationMap[target] });
+					targetTable = declarationMap[target];
 				}
-				if (isNotWhileOrIfOrParent(declarationMap, target)) {
-					joinClause += " INNER JOIN " + declarationMap[target].second + " ON parents.stmtNo = " + declarationMap[target].second + ".stmtNo";
+				string targetTableAlias = "temp_" + targetTable + "_" + source + target;
+				joinClause += "INNER JOIN (SELECT * FROM " + targetTable + " as " + targetTableAlias;
+				if (isValInMap(declarationMap, source) && isNotWhileOrIf(declarationMap, source)) {
+					joinClause += " INNER JOIN " + declarationMap[source] + " ON " + targetTableAlias + ".stmtNo = " + declarationMap[source] + ".stmtNo";
+				}
+				if (isValInMap(declarationMap, target) && isNotWhileOrIf(declarationMap, target)) {
+					joinClause += " INNER JOIN " + declarationMap[target] + " ON " + targetTableAlias + ".stmtNo = " + declarationMap[target] + ".stmtNo";
 				}
 				string refWhereClause = "";
 				for (int z = 0; z < parentRefIndex.size(); z += 1) {
-					string refTable = formatTableName(typeToArgList[parentRefIndex[z]].first);
 					string unformattedRefTable = typeToArgList[parentRefIndex[z]].first;
+					string refTable = formatTableName(typeToArgList[parentRefIndex[z]].first);
 					string refSource = typeToArgList[parentRefIndex[z]].second[0];
 					string refTarget = typeToArgList[parentRefIndex[z]].second[1];
-					joinClause += " INNER JOIN " + refTable + " ON parents.stmtNo = " + refTable + ".stmtNo";
-					refWhereClause = appendWhereClause(refWhereClause, unformattedRefTable, mainSynonymType, refSource, refTarget, declarationMap);
+					if (!isValInVectTwo({ "while", "if_table" }, mainSynonymType) && !isValInMap(mappedVariables, refSource) && isValInMap(declarationMap, refSource) && isValInVectTwo({"while", "if_table"}, declarationMap[refSource])) {
+						mappedVariables.insert({ refSource, declarationMap[refSource] });
+						refTable = declarationMap[refSource];
+					}
+					else if (!isValInVectTwo({ "while", "if_table" }, mainSynonymType) && !isValInMap(mappedVariables, refTarget) && isValInMap(declarationMap, refTarget) && isValInVectTwo({ "while", "if_table" }, declarationMap[refTarget])) {
+						mappedVariables.insert({ refTarget, declarationMap[refTarget] });
+						refTable = declarationMap[refTarget];
+					}
+					string refTableAlias = "temp_" + refTable + "_" + refSource + refTarget;
+					string columnName = ".stmtNo";
+					if (mainSynonymType != "stmt" && formatTableName(typeToArgList[parentRefIndex[z]].first) == "parents") {
+						columnName = ".parentStmtNo";
+						if (typeToArgList[parentRefIndex[z]].first == "Parent*") {
+							refWhereClause = appendAnd(refWhereClause);
+							refWhereClause += targetTableAlias + ".direct = '0'";
+						}
+					}
+					else if (
+						(isValInMap(declarationMap, refSource) && isValInMap(declarationMap, refTarget) && isValInVectTwo({ "while", "if_table" }, declarationMap[refSource]) && isValInVectTwo({ "while", "if_table" }, declarationMap[refTarget])) ||
+						(isValInMap(declarationMap, source) && isValInMap(declarationMap, target) && isValInVectTwo({ "while", "if_table" }, declarationMap[source]) && isValInVectTwo({ "while", "if_table" }, declarationMap[target]))
+					) {
+						refWhereClause = appendAnd(refWhereClause);
+						refWhereClause += "CAST(" + targetTableAlias + ".parentStmtNo as INT) < CAST(" + refTableAlias + ".parentStmtNo as INT)";
+					}
+					joinClause += " INNER JOIN " + refTable + " as " + refTableAlias + " ON " + targetTableAlias + columnName + " = " + refTableAlias + ".stmtNo";
+					bool refDirect = isDirect(unformattedRefTable);
+					refWhereClause = appendWhereClause(refWhereClause, unformattedRefTable, mainSynonymType, refSource, refTarget, declarationMap, true, refDirect);
 				}
-				refWhereClause = appendWhereClause(refWhereClause, unformattedTargetTable, mainSynonymType, source, target, declarationMap);
+				bool targetDirect = isDirect(unformattedTargetTable);
+				refWhereClause = appendWhereClause(refWhereClause, unformattedTargetTable, mainSynonymType, source, target, declarationMap, true, targetDirect);
 				if (refWhereClause != "") {
 					joinClause += " WHERE " + refWhereClause;
 				}
@@ -435,7 +417,8 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			else {
 				throw invalid_argument("unexpected synonym type: " + mainSynonymType);
 			}
-			whereClause = appendWhereClause(whereClause, unformattedTargetTable, mainSynonymType, source, target, declarationMap);
+			bool direct = isDirect(unformattedTargetTable);
+			whereClause = appendWhereClause(whereClause, unformattedTargetTable, mainSynonymType, source, target, declarationMap, false, direct);
 		}
 	}
 

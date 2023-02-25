@@ -44,11 +44,11 @@ void Database::initialize() {
 
 	// drop/create the existing while table (if any)
 	executeQuery("DROP TABLE IF EXISTS while");
-	executeQuery("CREATE TABLE while ( stmtNo VARCHAR(255) PRIMARY KEY, isParent VARCHAR(255) DEFAULT '0', CHECK (isParent == '0' OR isParent == '1'));");
+	executeQuery("CREATE TABLE while ( stmtNo VARCHAR(255) , parentStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', isParent VARCHAR(255) DEFAULT '0', PRIMARY KEY(stmtNo, parentStmtNo));");
 
 	// drop/create the existing if table (if any)
 	executeQuery("DROP TABLE IF EXISTS if_table");
-	executeQuery("CREATE TABLE if_table ( stmtNo VARCHAR(255) PRIMARY KEY, isParent VARCHAR(255) DEFAULT '0', CHECK (isParent == '0' OR isParent == '1'));");
+	executeQuery("CREATE TABLE if_table ( stmtNo VARCHAR(255) , parentStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', isParent VARCHAR(255) DEFAULT '0', PRIMARY KEY(stmtNo, parentStmtNo));");
 
 	// drop/create the existing pattern table (if any)
 	executeQuery("DROP TABLE IF EXISTS pattern_table");
@@ -138,13 +138,13 @@ void Database::insertStmt(string stmtNo) {
 }
 
 // method to insert a while into the database
-void Database::insertWhile(string stmtNo, string isParent) {
-	Database::executeQuery(generateInsertQuery("while", { "stmtNo", "isParent"}, { stmtNo, isParent }));
+void Database::insertWhile(string stmtNo, string isParent, string parentStmtNo, string direct) {
+	Database::executeQuery(generateInsertQuery("while", { "stmtNo", "isParent", "parentStmtNo", "direct" }, { stmtNo, isParent, parentStmtNo, direct }));
 }
 
 // method to insert a if into the database
-void Database::insertIf(string stmtNo, string isParent) {
-	Database::executeQuery(generateInsertQuery("if_table", { "stmtNo", "isParent" }, { stmtNo, isParent }));
+void Database::insertIf(string stmtNo, string isParent, string parentStmtNo, string direct) {
+	Database::executeQuery(generateInsertQuery("if_table", { "stmtNo", "isParent", "parentStmtNo", "direct" }, {stmtNo, isParent, parentStmtNo, direct }));
 }
 
 // method to insert a pattern into the database

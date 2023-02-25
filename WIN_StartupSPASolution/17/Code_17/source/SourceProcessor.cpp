@@ -43,6 +43,23 @@ void insertForAllContainer(vector<pair<string, int>> containerList, int stmtNum)
 	}
 }
 
+void insertForSpecificContainer(vector<pair<string, int>> containerList, int stmtNum, string type) {
+	for (int i = containerList.size() - 1; i > 0; i -= 1) {
+		string direct = "1";
+		if (i != containerList.size() - 1) {
+			direct = "0";
+		}
+		// insert nested while / if statements
+		if (type == "while") {
+			Database::insertWhile(to_string(stmtNum), "0", to_string(containerList[i].second), direct);
+		}
+
+		if (type == "if") {
+			Database::insertIf(to_string(stmtNum), "0", to_string(containerList[i].second), direct);
+		}
+	}
+}
+
 // method for processing the source program
 // This method currently only inserts the procedure name into the database
 // using some highly simplified logic.
@@ -67,8 +84,12 @@ void SourceProcessor::process(string program) {
 	bool isInExpr = false;
 	
 	vector<pair<string, int>> containerList;
+	vector<pair<string, int>> whileList;
+	vector<pair<string, int>> ifelseList;
 	containerList.push_back({ "main", 1 });
-	
+	whileList.push_back({ "main", 1 });
+	ifelseList.push_back({ "main", 1 });
+
 	vector<string> containers;
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
@@ -77,6 +98,12 @@ void SourceProcessor::process(string program) {
 		string currToken = tokens.at(i);
 		if (containers.size() > 0 && currToken == "}") {
 			if (containers[containers.size() - 1] != "if") {
+				if (containers[containers.size() - 1] == "while") {
+					whileList.pop_back();
+				}
+				else {
+					ifelseList.pop_back();
+				}
 				containers.pop_back();
 				containerList.pop_back();
 			}
@@ -89,16 +116,9 @@ void SourceProcessor::process(string program) {
 		) {
 			stmtNum++;
 			Database::insertStmt(to_string(stmtNum));
-
-			// insert nested while / if statements
-			if (isValInVect(containers, "while") && currToken != "while") {
-				Database::insertWhile(to_string(stmtNum), "0");
-			}
-
-			if ((isValInVect(containers, "if") || isValInVect(containers, "ifelse")) && currToken != "if") {
-				Database::insertIf(to_string(stmtNum), "0");
-			}
 			insertForAllContainer(containerList, stmtNum);
+			insertForSpecificContainer(whileList, stmtNum, "while");
+			insertForSpecificContainer(ifelseList, stmtNum, "if");
 		}
 		if (isValInVect({ "{", "then", ";" }, currToken)) {
 			isInExpr = false;
@@ -112,10 +132,12 @@ void SourceProcessor::process(string program) {
 		// ------------------------------------------------------------------------
 		if (isValInVect({"while", "if"}, currToken)) {
 			if (currToken == "while") {
-				Database::insertWhile(to_string(stmtNum), "1");
+				Database::insertWhile(to_string(stmtNum), "1", to_string(stmtNum), "1");
+				whileList.push_back({ currToken, stmtNum });
 			}
 			else if (currToken == "if") {
-				Database::insertIf(to_string(stmtNum), "1");
+				Database::insertIf(to_string(stmtNum), "1", to_string(stmtNum), "1");
+				ifelseList.push_back({ currToken, stmtNum });
 			}
 			insertForAllContainer(containerList, stmtNum);
 			containers.push_back(currToken);
