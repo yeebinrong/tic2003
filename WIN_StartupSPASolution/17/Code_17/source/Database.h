@@ -27,7 +27,7 @@ public:
 	static void getProcedures(vector<string>& results);
 
 	// method to insert/get a variable into the database
-	static void insertVariable(string variableName);
+	static void insertVariable(string variableName, string stmtNo);
 	static void getVariables(vector<string>& results);
 
 	// method to insert/get a Constant into the database
@@ -51,10 +51,10 @@ public:
 	static void getStmts(vector<string>& results);
 
 	// method to insert a if into the database
-	static void insertIf(string stmtno);
+	static void insertIf(string stmtno, string isParent);
 
 	// method to insert a while into the database
-	static void insertWhile(string stmtno);
+	static void insertWhile(string stmtno, string isParent);
 
 	// method to insert a pattern into the database
 	static void insertPattern(string stmtNo, string source, string target);

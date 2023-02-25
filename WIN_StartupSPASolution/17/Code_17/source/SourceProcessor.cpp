@@ -17,7 +17,7 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 		// check for values that does not match
 		if (!isValInVect({ "(", ")", ">", "<", "+", "-", "*", "/", "%" }, offsetToken)) {
 			if (isalpha(offsetToken[0])) {
-				Database::insertVariable(offsetToken);
+				Database::insertVariable(offsetToken, to_string(stmtNum));
 				if (initialOffset == 2) {
 					// if it is an assignment
 					Database::insertUses(to_string(stmtNum), procedureName, offsetToken);
@@ -75,9 +75,14 @@ void SourceProcessor::process(string program) {
 
 		string prevToken = tokens.at(i - 1);
 		string currToken = tokens.at(i);
-		if (containers.size() > 0 && currToken == "}" && containers[containers.size() - 1] != "if") {
-			containers.pop_back();
-			containerList.pop_back();
+		if (containers.size() > 0 && currToken == "}") {
+			if (containers[containers.size() - 1] != "if") {
+				containers.pop_back();
+				containerList.pop_back();
+			}
+			else {
+				containers[containers.size() - 1] = "ifelse";
+			}
 		}
 		if (isValInVect({"{", ";", "}"}, prevToken) &&
 			!isValInVect({"}", "else"}, currToken)
@@ -86,12 +91,12 @@ void SourceProcessor::process(string program) {
 			Database::insertStmt(to_string(stmtNum));
 
 			// insert nested while / if statements
-			if (isValInVect(containers, "while")) {
-				Database::insertWhile(to_string(stmtNum));
+			if (isValInVect(containers, "while") && currToken != "while") {
+				Database::insertWhile(to_string(stmtNum), "0");
 			}
 
-			if (isValInVect(containers, "if")) {
-				Database::insertIf(to_string(stmtNum));
+			if ((isValInVect(containers, "if") || isValInVect(containers, "ifelse")) && currToken != "if") {
+				Database::insertIf(to_string(stmtNum), "0");
 			}
 			insertForAllContainer(containerList, stmtNum);
 		}
@@ -107,10 +112,10 @@ void SourceProcessor::process(string program) {
 		// ------------------------------------------------------------------------
 		if (isValInVect({"while", "if"}, currToken)) {
 			if (currToken == "while") {
-				Database::insertWhile(to_string(stmtNum));
+				Database::insertWhile(to_string(stmtNum), "1");
 			}
 			else if (currToken == "if") {
-				Database::insertIf(to_string(stmtNum));
+				Database::insertIf(to_string(stmtNum), "1");
 			}
 			insertForAllContainer(containerList, stmtNum);
 			containers.push_back(currToken);
@@ -123,19 +128,19 @@ void SourceProcessor::process(string program) {
 		else if (currToken != "}") {
 			if (isalpha(currToken[0]) && tokens.at(i + 1) == "=") {
 				isInExpr = true;
-				Database::insertVariable(currToken);
+				Database::insertVariable(currToken, to_string(stmtNum));
 				Database::insertAssignment(to_string(stmtNum));
 				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
 				// offset two to skip equal sign
 				insertExpr({ ";" }, tokens, i, 2, stmtNum, procedureName);
 			}
 			else if (prevToken == "read") {
-				Database::insertVariable(currToken);
+				Database::insertVariable(currToken, to_string(stmtNum));
 				Database::insertRead(to_string(stmtNum));
 				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
 			}
 			else if (prevToken == "print") {
-				Database::insertVariable(currToken);
+				Database::insertVariable(currToken, to_string(stmtNum));
 				Database::insertPrint(to_string(stmtNum));
 				Database::insertUses(to_string(stmtNum), procedureName, currToken);
 			}

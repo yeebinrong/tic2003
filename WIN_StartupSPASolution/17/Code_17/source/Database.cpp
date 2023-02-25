@@ -20,7 +20,7 @@ void Database::initialize() {
 
 	// drop/create the existing variable table (if any)
 	executeQuery("DROP TABLE IF EXISTS variable");
-	executeQuery("CREATE TABLE variable ( name VARCHAR(255) PRIMARY KEY);");
+	executeQuery("CREATE TABLE variable ( name VARCHAR(255), stmtNo VARCHAR(255), PRIMARY KEY(name, stmtNo));");
 
 	// drop/create the existing constant table (if any)
 	executeQuery("DROP TABLE IF EXISTS constant");
@@ -44,11 +44,11 @@ void Database::initialize() {
 
 	// drop/create the existing while table (if any)
 	executeQuery("DROP TABLE IF EXISTS while");
-	executeQuery("CREATE TABLE while ( stmtNo VARCHAR(255) PRIMARY KEY);");
+	executeQuery("CREATE TABLE while ( stmtNo VARCHAR(255) PRIMARY KEY, isParent VARCHAR(255) DEFAULT '0', CHECK (isParent == '0' OR isParent == '1'));");
 
 	// drop/create the existing if table (if any)
 	executeQuery("DROP TABLE IF EXISTS if_table");
-	executeQuery("CREATE TABLE if_table ( stmtNo VARCHAR(255) PRIMARY KEY);");
+	executeQuery("CREATE TABLE if_table ( stmtNo VARCHAR(255) PRIMARY KEY, isParent VARCHAR(255) DEFAULT '0', CHECK (isParent == '0' OR isParent == '1'));");
 
 	// drop/create the existing pattern table (if any)
 	executeQuery("DROP TABLE IF EXISTS pattern_table");
@@ -108,8 +108,8 @@ void Database::insertProcedure(string name)
 }
 
 // method to insert a Variable into the database
-void Database::insertVariable(string name) {
-	Database::executeQuery(generateInsertQuery("variable", { "name" }, { name }));
+void Database::insertVariable(string name, string stmtNo) {
+	Database::executeQuery(generateInsertQuery("variable", { "name", "stmtNo"}, {name, stmtNo}));
 }
 
 // method to insert a Constant into the database
@@ -138,13 +138,13 @@ void Database::insertStmt(string stmtNo) {
 }
 
 // method to insert a while into the database
-void Database::insertWhile(string stmtNo) {
-	Database::executeQuery(generateInsertQuery("while", { "stmtNo" }, { stmtNo }));
+void Database::insertWhile(string stmtNo, string isParent) {
+	Database::executeQuery(generateInsertQuery("while", { "stmtNo", "isParent"}, { stmtNo, isParent }));
 }
 
 // method to insert a if into the database
-void Database::insertIf(string stmtNo) {
-	Database::executeQuery(generateInsertQuery("if_table", { "stmtNo" }, { stmtNo }));
+void Database::insertIf(string stmtNo, string isParent) {
+	Database::executeQuery(generateInsertQuery("if_table", { "stmtNo", "isParent" }, { stmtNo, isParent }));
 }
 
 // method to insert a pattern into the database
