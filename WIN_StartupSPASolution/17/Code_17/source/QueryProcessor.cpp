@@ -131,7 +131,7 @@ string appendWhereClause(string clause, string targetTable, string mainSynonymTy
 				clause = appendPatternClause(clause, aliasTable, "target", target);
 			}
 			else {
-				if (isValInMap(declarationMap, source) && declarationMap[source] == "procedure") {
+				if (!isValInMap(declarationMap, source) && mainSynonymType == "procedure") {
 					clause = appendAnd(clause);
 					clause += aliasTable + ".procedureName = '" + source + "'";
 				}
@@ -409,7 +409,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				joinClause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".stmtNo = " + targetTable + ".stmtNo";
 			}
 			else if (mainSynonymType == "procedure") {
-				joinClause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".name = " + targetTable + ".procedureName";
+				joinClause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".procedureName = " + targetTable + ".procedureName";
 			}
 			else if (mainSynonymType == "variable") {
 				joinClause += " INNER JOIN " + targetTable + " ON " + mainSynonymType + ".name = " + targetTable + ".target";
