@@ -30,4 +30,5 @@ procedure computeMultiple{
             read age;
             print num2;
         }
+	count = count + 123;
 }
