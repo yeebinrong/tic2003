@@ -51,7 +51,7 @@ Select a such that Parent* (12, a)
 11 - identify assignment that uses count
 assign a;
 Select a such that Uses (a, "count")
-10, 11, 18
+10, 11, 18, 23
 5000
 12 - identify assignment that modifies num2
 assign a;
@@ -76,7 +76,7 @@ Select a such that pattern a ("num1", _)
 16 - identify assignments whose LHS contain count
 assign a;
 Select a such that pattern a ("count", _)
-3, 10, 18
+3, 10, 18, 23
 5000
 17 - identify while whose parent statement is 4
 while w;
@@ -156,7 +156,7 @@ num3, num1, count, num4, num2, age
 32 - identify constants that are used by statements
 constant c; stmt s;
 Select c such that such that pattern s (_,_c_)
-0, 1, 3, 5, 10
+0, 1, 3, 5, 10, 123
 5000
 33 - identify procedure
 procedure p;
@@ -212,4 +212,9 @@ Select a such that Uses (a, "count") pattern a (_, _"1"_)
 assign a; variable v;
 Select a such that Modifies (a, "num2") pattern a (_, _"num1"_)
 17
+5000
+44 - identify assignment that pattern 123
+assign a; variable v;
+Select a such that Uses (a, "count") pattern a (_, _"count + 1"_)
+10, 18
 5000

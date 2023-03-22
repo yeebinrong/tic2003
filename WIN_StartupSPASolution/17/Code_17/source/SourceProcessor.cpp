@@ -13,7 +13,8 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 	string offsetToken = tokens.at(currIdx + offset);
 	string concatStr;
 	while (!isValInVect(loopCondition, offsetToken)) {
-		concatStr += offsetToken;
+		// add delimiter to separate token to prevent false positive eg. count + 1 and count + 123
+		concatStr += '|' + offsetToken + '|';
 		// check for values that does not match
 		if (!isValInVect({ "(", ")", ">", "<", "+", "-", "*", "/", "%" }, offsetToken)) {
 			if (isalpha(offsetToken[0])) {

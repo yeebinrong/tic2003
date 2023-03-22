@@ -24,6 +24,10 @@ bool isValInVectTwo(vector<string> vector, string value) {
 	return std::find(vector.begin(), vector.end(), value) != vector.end();
 }
 
+bool isCharInVectTwo(vector<char> vector, char value) {
+	return std::find(vector.begin(), vector.end(), value) != vector.end();
+}
+
 bool isValInMap(map<string, string> m, string value) {
 	if (m.find(value) == m.end()) {
 		return false;
@@ -57,7 +61,32 @@ string checkAndReplaceLike(string str) {
 	if (str[str.length() - 1] == '_') {
 		str[str.length() - 1] = '%';
 	}
-	return removeWhiteSpace(str);
+	str = removeWhiteSpace(str);
+	string temp = "";
+	for (int i = 0; i < str.size(); i += 1) {
+		if (str[i] == '%') {
+			if (temp != "") {
+				temp += "|";
+			}
+			temp += str[i];
+			if (temp == "%") {
+				temp += "|";
+			}
+		}
+		else {
+			if (isCharInVectTwo({ '(', ')', '>', '<', '+', '-', '*', '/', '%' }, str[i])) {
+				if (temp != "%|") {
+					temp += "||";
+				}
+				temp += str[i];
+				temp += "||";
+			}
+			else {
+				temp += str[i];
+			}
+		}
+	}
+	return temp;
 }
 
 string appendPatternClause(string clause, string tableName, string column, string value) {
