@@ -1,0 +1,240 @@
+1001 - stmt entity no clause
+stmt s;
+Select s
+1,10,11,12,13,14,15,16,17,18,19,2,20,21,3,4,5,6,7,8,9
+5000
+1002 - read entity no clause
+read r;
+Select r
+1,11,15,17,20,5
+5000
+1003 - print entity no clause
+print pr;
+Select pr
+12,18,21,3,7,9
+5000
+1004 - while entity no clause
+while w;
+Select w
+16,4
+5000
+1005 - if entity no clause
+if ifs;
+Select ifs
+8
+5000
+1006 - assign entity no clause
+assign a;
+Select a
+10,13,14,19,2,6
+5000
+1007 - variable entity no clause
+variable v;
+Select v
+a,b,c,code9,coding7,d,test001,test002,test02
+5000
+1008 - constant entity no clause
+constant c;
+Select c
+10,20,30
+5000
+1009 - procedure entity no clause
+procedure p;
+Select p
+NonNesting01
+5000
+1030 - Parent 2 wildcards
+read r;
+Select r such that Parent(_, _)
+1,11,15,17,20,5
+5000
+1031 - Parent left wildcard with stmtNo
+while w;
+Select w such that Parent(_, 3)
+none
+5000
+1032 - Parent right wildcard with stmtNo
+if ifs;
+Select ifs such that Parent(8, _)
+8
+5000
+1033 - Parent left wildcard with syn
+assign a;
+Select a such that Parent(_, a)
+10,13,14,19,6
+5000
+1034 - Parent right wildcard with syn
+stmt s;
+Select s such that Parent(s, _)
+16,4,8
+5000
+1035 - Parent both stmtNo
+constant c;
+Select c such that Parent(8, 12)
+10,20,30
+5000
+1036 - Parent both syns, select from left
+if ifs; stmt s;
+Select ifs such that Parent(ifs, s)
+8
+5000
+1037 - Parent both syns, select from right
+while w; print pr;
+Select pr such that Parent(w, pr)
+18,21,7
+5000
+1038 - Parent mix, stmtNo syn
+stmt s;
+Select s such that Parent(4, s)
+5,6,7
+5000
+1039 - Parent mix, syn stmtNo
+while w;
+Select w such that Parent(w, 18)
+16
+5000
+1040 - Parent* 2 wildcards
+variable v;
+Select v such that Parent*(_, _)
+a,b,c,code9,coding7,d,test001,test002,test02
+5000
+1041 - Parent* left wildcard with stmtNo
+print pr;
+Select pr such that Parent*(_, 3)
+none
+5000
+1042 - Parent* right wildcard with stmtNo
+read r;
+Select r such that Parent*(16, _)
+1,11,15,17,20,5
+5000
+1043 - Parent* left wildcard with syn
+while w;
+Select w such that Parent*(_, w)
+none
+5000
+1044 - Parent* right wildcard with syn
+if ifs;
+Select ifs such that Parent*(ifs, _)
+8
+5000
+1045 - Parent* both stmtNo
+variable v;
+Select v such that Parent*(4, 10)
+none
+5000
+1046 - Parent* both syns, select from left
+if ifs; print p;
+Select ifs such that Parent*(ifs, p)
+8
+5000
+1047 - Parent* both syns, select from right
+if ifs; print p;
+Select p such that Parent*(ifs, p)
+12,9
+5000
+1048 - Parent* mix, stmtNo syn
+if ifs;
+Select ifs such that Parent*(8, ifs)
+none
+5000
+1049 - Parent* mix, syn stmtNo
+while w;
+Select w such that Parent*(w, 7)
+4
+5000
+1050 - Modifies syn and ident
+stmt s;
+Select s such that Modifies(s, "a")
+1,10,13,14,16,17,4,5,8
+5000
+1051 - Modifies stmtNo and syn
+variable v;
+Select v such that Modifies(4, v)
+a,test02
+5000
+1052 - Modifies syn and wildcard
+read r;
+Select r such that Modifies(r, _)
+1,11,15,17,20,5
+5000
+1053 - Modifies two syns
+while w; variable v;
+Select w such that Modifies(w, v)
+16,4
+5000
+1054 - Uses syn and ident
+stmt s;
+Select s such that Uses(s, "b")
+10,13,14,16,18,2,4,6,7,8
+5000
+1055 - Uses stmtNo and syn
+variable v;
+Select v such that Uses(8, v)
+a,b,c,coding7,d,test001
+5000
+1056 - Uses syn and wildcard
+print pr;
+Select pr such that Uses(pr, _)
+12,18,21,3,7,9
+5000
+1057 - Uses two syns
+if ifs; variable v;
+Select ifs such that Uses(ifs, v)
+8
+5000
+1058 - Pattern wildcard partial match
+assign a;
+Select a pattern a(_, _"30"_)
+19
+5000
+1059 - Pattern syn exact match
+assign a; variable v;
+Select v pattern a(v, _"c"_)
+a,test001,test002,test02
+5000
+1060 - Pattern ident partial match
+assign a;
+Select a pattern a("d", _"20"_)
+none
+5000
+1061 - Pattern ident exact match
+assign a;
+Select a pattern a("test001", _"a"_)
+2
+5000
+1064 - Mix Parent and pattern
+assign a; if ifs;
+Select a such that Parent(ifs, a) pattern a("a", _)
+10,13,14
+5000
+1065 - Mix Parent* and pattern
+assign a; while w; variable v;
+Select v  such that Parent*(w, a) pattern a(v, _"b"_)
+test02
+5000
+1066 - Mix Modifies and pattern
+assign a; while w; variable v;
+Select v such that Modifies(w, v) pattern a(v, _"b"_)
+a,test02
+5000
+1067 - Mix Modifies and pattern
+assign a; stmt s; variable v;
+Select s such that Modifies(s, _) pattern a(v, _"a"_)
+1,10,11,13,14,15,16,17,19,2,20,4,5,6,8
+5000
+1068 - Mix Uses and pattern
+assign a; variable v;
+Select a such that Uses(a, v) pattern a("a", _)
+10,13,14
+5000
+1069 - Mix Uses and pattern
+assign a; variable v;
+Select v such that Uses(a, v) pattern a(_, _"a"_)
+a,b,c,d
+5000
+1071 - Mix Parent* and pattern
+assign a; while w;
+Select w such that Parent*(w, a) pattern a("test002", _)
+16
+5000
