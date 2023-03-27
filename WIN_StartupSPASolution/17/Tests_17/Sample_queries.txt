@@ -31,12 +31,12 @@ Select p such that Parent (4, p)
 7 - identify print statements whose direct/indirect parent is statement 4
 print p;
 Select p such that Parent* (4, p)
-7, 16, 17, 23, 32, 33, 34
+7, 16, 17, 23, 32, 33
 5000
 8 - identify print statements that uses num2
 print p; variable v;
 Select p such that Uses (p,"num2")
-17, 32, 34
+17, 32
 5000
 9 - identify assignment that whose parent is statement 8
 assign a;
@@ -176,7 +176,7 @@ Select r such that Parent* (w, r)
 36 - identify print statements within a loop
 print p; while w;
 Select p such that Parent* (w, p)
-16, 17, 33, 34
+16, 17, 33
 5000
 37 - identify statements within a loop
 stmt s; while w;
