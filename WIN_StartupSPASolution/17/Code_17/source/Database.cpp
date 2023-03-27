@@ -20,7 +20,7 @@ void Database::initialize() {
 
 	// drop/create the existing variable table (if any)
 	executeQuery("DROP TABLE IF EXISTS variable");
-	executeQuery("CREATE TABLE variable ( name VARCHAR(255), stmtNo VARCHAR(255), PRIMARY KEY(name, stmtNo));");
+	executeQuery("CREATE TABLE variable ( procedureName VARCHAR(255), name VARCHAR(255), stmtNo VARCHAR(255), PRIMARY KEY(procedureName, name, stmtNo));");
 
 	// drop/create the existing constant table (if any)
 	executeQuery("DROP TABLE IF EXISTS constant");
@@ -108,8 +108,8 @@ void Database::insertProcedure(string name)
 }
 
 // method to insert a Variable into the database
-void Database::insertVariable(string name, string stmtNo) {
-	Database::executeQuery(generateInsertQuery("variable", { "name", "stmtNo"}, {name, stmtNo}));
+void Database::insertVariable(string procedureName, string name, string stmtNo) {
+	Database::executeQuery(generateInsertQuery("variable", { "procedureName", "name", "stmtNo"}, {procedureName, name, stmtNo}));
 }
 
 // method to insert a Constant into the database
