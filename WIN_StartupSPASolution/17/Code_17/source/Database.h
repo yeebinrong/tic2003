@@ -27,7 +27,7 @@ public:
 	static void getProcedures(vector<string>& results);
 
 	// method to insert/get a variable into the database
-	static void insertVariable(string variableName, string stmtNo);
+	static void insertVariable(string procedureName, string variableName, string stmtNo);
 	static void getVariables(vector<string>& results);
 
 	// method to insert/get a Constant into the database
