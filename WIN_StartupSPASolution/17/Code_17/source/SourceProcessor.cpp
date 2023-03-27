@@ -1,6 +1,7 @@
 #include "SourceProcessor.h"
 #include <iostream>
 #include <vector>
+#include <map>
 
 // method to check if value is found in the vector
 bool isValInVect(vector<string> vector, string value) {
@@ -61,6 +62,13 @@ void insertForSpecificContainer(vector<pair<string, int>> containerList, int stm
 	}
 }
 
+void insertForSubProc(vector<pair<string, int>> containerList, int stmtNum) {
+	for (int i = containerList.size() - 1; i > 0; i -= 1) {
+		string direct = "0";
+		Database::insertParent(to_string(stmtNum), to_string(containerList[i].second), direct);
+	}
+}
+
 // method for processing the source program
 // This method currently only inserts the procedure name into the database
 // using some highly simplified logic.
@@ -79,22 +87,24 @@ void SourceProcessor::process(string program) {
 	string procedureName = tokens.at(1);
 	// insert the procedure into the database
 	Database::insertProcedure(procedureName);
-
 	//@@@ init @@@//
-	int stmtNum = 0; //statement increment
+	int stmtNum = 0, prevStmtNum = 0; //statement increment
 	bool isInExpr = false;
 	
 	vector<pair<string, int>> containerList;
 	vector<pair<string, int>> whileList;
 	vector<pair<string, int>> ifelseList;
+	map<string, vector<pair<string, int>>> procedureMap;
+	vector<string> procedureList;
+	procedureList.push_back(procedureName);
 	containerList.push_back({ "main", 1 });
 	whileList.push_back({ "main", 1 });
 	ifelseList.push_back({ "main", 1 });
+	procedureMap.insert(pair<string, vector<pair<string, int>>>(procedureName, {}));
 
 	vector<string> containers;
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
-
 		string prevToken = tokens.at(i - 1);
 		string currToken = tokens.at(i);
 		if (containers.size() > 0 && currToken == "}") {
@@ -113,13 +123,19 @@ void SourceProcessor::process(string program) {
 			}
 		}
 		if (isValInVect({"{", ";", "}"}, prevToken) &&
-			!isValInVect({"}", "else"}, currToken)
-		) {
+			!isValInVect({"}", "else", "procedure"}, currToken))
+		{
+			prevStmtNum = stmtNum;
 			stmtNum++;
 			Database::insertStmt(to_string(stmtNum));
 			insertForAllContainer(containerList, stmtNum);
 			insertForSpecificContainer(whileList, stmtNum, "while");
 			insertForSpecificContainer(ifelseList, stmtNum, "if");
+			//add logic here to handle sub-procedure parent* logic ************************
+			if (procedureMap[procedureList.back()].size()) {
+				vector<pair<string, int>> tempContainerList = procedureMap[procedureList.back()];
+				insertForSubProc(tempContainerList, stmtNum);
+			}
 		}
 		if (isValInVect({ "{", "then", ";" }, currToken)) {
 			isInExpr = false;
@@ -149,6 +165,7 @@ void SourceProcessor::process(string program) {
 		}
 		// ensure not out of bounds
 		else if (currToken != "}") {
+			procedureName = procedureList.back();
 			if (isalpha(currToken[0]) && tokens.at(i + 1) == "=") {
 				isInExpr = true;
 				Database::insertVariable(currToken, to_string(stmtNum));
@@ -168,10 +185,21 @@ void SourceProcessor::process(string program) {
 				Database::insertUses(to_string(stmtNum), procedureName, currToken);
 			}
 			else if (prevToken == "call") {
-				// not needed for iteration 2
-				//Database::insertModifies(to_string(stmtNum), procedureName, currToken);
-				//Database::insertUses(to_string(stmtNum), procedureName, currToken);
+				//Database::insertModifies(to_string(stmtNum), procedureList.back(), currToken);
+				//Database::insertUses(to_string(stmtNum), procedureList.back(), currToken);
+				//merge and store container list onto map, for reference when handling parent* relation
+				vector<pair<string, int>> mergedContainerList = containerList;
+				mergedContainerList.insert(mergedContainerList.end(), procedureMap[procedureName].begin(), procedureMap[procedureName].end());
+				procedureMap.insert(pair<string, vector<pair<string, int>>>(currToken, mergedContainerList));
 			}
+			else if (prevToken == "procedure") {
+				Database::insertProcedure(currToken);
+				//procedureList.back() holds the current procedure that's being handled
+				procedureList.push_back(currToken);
+				//empty containerList
+				containerList.clear();
+			}
+			
 		}
 	}
 }		
