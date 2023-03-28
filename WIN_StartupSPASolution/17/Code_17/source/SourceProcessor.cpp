@@ -109,7 +109,6 @@ void SourceProcessor::process(string program) {
 	vector<string> containers;
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
-		cout << "no: "<<i<<" token: " << tokens.at(i) << endl;
 		string prevToken = tokens.at(i - 1);
 		string currToken = tokens.at(i);
 		if (containers.size() > 0 && currToken == "}") {
@@ -154,7 +153,6 @@ void SourceProcessor::process(string program) {
 		// ------------------------------------------------------------------------
 		if (isValInVect({"while", "if"}, currToken)) {
 			if (currToken == "while") {
-				cout << "inserting while manually! stmtno: "<<stmtNum << endl;
 				Database::insertWhile(to_string(stmtNum), "1", to_string(stmtNum), "1");
 				whileList.push_back({ currToken, stmtNum });
 			}
@@ -206,12 +204,10 @@ void SourceProcessor::process(string program) {
 				vector<pair<string, int>> mergedContainerList = containerList;
 				mergedContainerList.insert(mergedContainerList.end(), procContMap[procedureList.back()].begin(), procContMap[procedureList.back()].end());
 				if (procContMap.find(currToken) == procContMap.end()) {
-					cout << "new entry into map" << endl;
 					mergedContainerList.erase(mergedContainerList.begin());
 					procContMap.insert(pair<string, vector<pair<string, int>>>(currToken, mergedContainerList));
 				}
 				else {
-					cout << "already exists in map" << endl;
 					mergedContainerList.insert(mergedContainerList.end(), procContMap[currToken].begin(), procContMap[currToken].end());
 					procContMap[currToken] = mergedContainerList;
 				}
@@ -219,10 +215,6 @@ void SourceProcessor::process(string program) {
 
 			}
 			else if (prevToken == "procedure") {
-				cout << "this is " << currToken << "'s containerList" << endl;;
-				for (int i = procContMap[currToken].size() - 1; i >= 0; i--) {
-					cout << procContMap[currToken].at(i).first << ": " << procContMap[currToken].at(i).second << endl;
-				}
 				Database::insertProcedure(currToken);
 				//procedureList.back() holds the current procedure that's being handled
 				procedureList.push_back(currToken);
@@ -236,7 +228,6 @@ void SourceProcessor::process(string program) {
 				i = 2; //repeat to update parent
 				repeated = true;
 				stmtNum = 0;
-				cout << "repeated!" << endl;
 			}
 			else {
 				break;
