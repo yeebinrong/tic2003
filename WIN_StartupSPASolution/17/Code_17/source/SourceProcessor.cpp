@@ -9,7 +9,7 @@ bool isValInVect(vector<string> vector, string value) {
 }
 
 // method to insert variable and constants from expr
-void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset, int stmtNum, string procedureName) {
+void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset, int stmtNum, string procedureName, vector<pair<string, int>> containerList) {
 	int offset = initialOffset;
 	string offsetToken = tokens.at(currIdx + offset);
 	string concatStr;
@@ -19,10 +19,10 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 		// check for values that does not match
 		if (!isValInVect({ "(", ")", ">", "<", "+", "-", "*", "/", "%" }, offsetToken)) {
 			if (isalpha(offsetToken[0])) {
-				Database::insertVariable(offsetToken, to_string(stmtNum));
-				if (initialOffset == 2) {
-					// if it is an assignment
-					Database::insertUses(to_string(stmtNum), procedureName, offsetToken);
+				Database::insertVariable(procedureName, offsetToken, to_string(stmtNum));
+				Database::insertUses(to_string(stmtNum), procedureName, offsetToken);
+				for (int i = containerList.size() - 1; i > 0; i -= 1) {
+					Database::insertUses(to_string(containerList[i].second), procedureName, offsetToken);
 				}
 			}
 			else if (isdigit(offsetToken[0])) {
@@ -167,28 +167,37 @@ void SourceProcessor::process(string program) {
 			containerList.push_back({ currToken, stmtNum });
 			Database::insertParent(to_string(stmtNum + 1), to_string(stmtNum), "1");
 			isInExpr = true;
-			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName);
+			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName, containerList);
 		}
 		// ensure not out of bounds
 		else if (currToken != "}") {
 			procedureName = procedureList.back();
 			if (isalpha(currToken[0]) && tokens.at(i + 1) == "=") {
 				isInExpr = true;
-				Database::insertVariable(currToken, to_string(stmtNum));
+				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertAssignment(to_string(stmtNum));
 				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
+				for (int i = containerList.size() - 1; i > 0; i -= 1) {
+					Database::insertModifies(to_string(containerList[i].second), procedureName, currToken);
+				}
 				// offset two to skip equal sign
-				insertExpr({ ";" }, tokens, i, 2, stmtNum, procedureName);
+				insertExpr({ ";" }, tokens, i, 2, stmtNum, procedureName, containerList);
 			}
 			else if (prevToken == "read") {
-				Database::insertVariable(currToken, to_string(stmtNum));
+				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertRead(to_string(stmtNum));
 				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
+				for (int i = containerList.size() - 1; i > 0; i -= 1) {
+					Database::insertModifies(to_string(containerList[i].second), procedureName, currToken);
+				}
 			}
 			else if (prevToken == "print") {
-				Database::insertVariable(currToken, to_string(stmtNum));
+				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertPrint(to_string(stmtNum));
 				Database::insertUses(to_string(stmtNum), procedureName, currToken);
+				for (int i = containerList.size() - 1; i > 0; i -= 1) {
+					Database::insertUses(to_string(containerList[i].second), procedureName, currToken);
+				}
 			}
 			else if (prevToken == "call") {
 				//Database::insertModifies(to_string(stmtNum), procedureList.back(), currToken);
