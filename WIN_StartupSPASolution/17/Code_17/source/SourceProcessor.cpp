@@ -69,6 +69,11 @@ void insertForSubProc(vector<pair<string, int>> containerList, int stmtNum) {
 	}
 }
 
+void adhocProcParentPrint(string procedure, vector<pair<string, int>> containerList) {
+
+
+}
+
 // method for processing the source program
 // This method currently only inserts the procedure name into the database
 // using some highly simplified logic.
@@ -90,21 +95,21 @@ void SourceProcessor::process(string program) {
 	//@@@ init @@@//
 	int stmtNum = 0, prevStmtNum = 0; //statement increment
 	bool isInExpr = false;
-	
 	vector<pair<string, int>> containerList;
 	vector<pair<string, int>> whileList;
 	vector<pair<string, int>> ifelseList;
-	map<string, vector<pair<string, int>>> procedureMap;
-	vector<string> procedureList;
+	map<string, vector<pair<string, int>>> procContMap; //store procedure and vector of containers within procedure
+	vector<string> procedureList; 
 	procedureList.push_back(procedureName);
 	containerList.push_back({ "main", 1 });
 	whileList.push_back({ "main", 1 });
 	ifelseList.push_back({ "main", 1 });
-	procedureMap.insert(pair<string, vector<pair<string, int>>>(procedureName, {}));
-
+	procContMap.insert(pair<string, vector<pair<string, int>>>(procedureName, {}));
+	bool repeated = false;
 	vector<string> containers;
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
+		cout << "no: "<<i<<" token: " << tokens.at(i) << endl;
 		string prevToken = tokens.at(i - 1);
 		string currToken = tokens.at(i);
 		if (containers.size() > 0 && currToken == "}") {
@@ -132,8 +137,8 @@ void SourceProcessor::process(string program) {
 			insertForSpecificContainer(whileList, stmtNum, "while");
 			insertForSpecificContainer(ifelseList, stmtNum, "if");
 			//add logic here to handle sub-procedure parent* logic ************************
-			if (procedureMap[procedureList.back()].size()) {
-				vector<pair<string, int>> tempContainerList = procedureMap[procedureList.back()];
+			if (procContMap[procedureList.back()].size()) {
+				vector<pair<string, int>> tempContainerList = procContMap[procedureList.back()];
 				insertForSubProc(tempContainerList, stmtNum);
 			}
 		}
@@ -149,6 +154,7 @@ void SourceProcessor::process(string program) {
 		// ------------------------------------------------------------------------
 		if (isValInVect({"while", "if"}, currToken)) {
 			if (currToken == "while") {
+				cout << "inserting while manually! stmtno: "<<stmtNum << endl;
 				Database::insertWhile(to_string(stmtNum), "1", to_string(stmtNum), "1");
 				whileList.push_back({ currToken, stmtNum });
 			}
@@ -189,10 +195,25 @@ void SourceProcessor::process(string program) {
 				//Database::insertUses(to_string(stmtNum), procedureList.back(), currToken);
 				//merge and store container list onto map, for reference when handling parent* relation
 				vector<pair<string, int>> mergedContainerList = containerList;
-				mergedContainerList.insert(mergedContainerList.end(), procedureMap[procedureName].begin(), procedureMap[procedureName].end());
-				procedureMap.insert(pair<string, vector<pair<string, int>>>(currToken, mergedContainerList));
+				mergedContainerList.insert(mergedContainerList.end(), procContMap[procedureList.back()].begin(), procContMap[procedureList.back()].end());
+				if (procContMap.find(currToken) == procContMap.end()) {
+					cout << "new entry into map" << endl;
+					mergedContainerList.erase(mergedContainerList.begin());
+					procContMap.insert(pair<string, vector<pair<string, int>>>(currToken, mergedContainerList));
+				}
+				else {
+					cout << "already exists in map" << endl;
+					mergedContainerList.insert(mergedContainerList.end(), procContMap[currToken].begin(), procContMap[currToken].end());
+					procContMap[currToken] = mergedContainerList;
+				}
+
+
 			}
 			else if (prevToken == "procedure") {
+				cout << "this is " << currToken << "'s containerList" << endl;;
+				for (int i = procContMap[currToken].size() - 1; i >= 0; i--) {
+					cout << procContMap[currToken].at(i).first << ": " << procContMap[currToken].at(i).second << endl;
+				}
 				Database::insertProcedure(currToken);
 				//procedureList.back() holds the current procedure that's being handled
 				procedureList.push_back(currToken);
@@ -200,6 +221,17 @@ void SourceProcessor::process(string program) {
 				containerList.clear();
 			}
 			
+		}
+		if (i+1 == tokens.size()) {
+			if (repeated == false) {
+				i = 2; //repeat to update parent
+				repeated = true;
+				stmtNum = 0;
+				cout << "repeated!" << endl;
+			}
+			else {
+				break;
+			}
 		}
 	}
 }		
