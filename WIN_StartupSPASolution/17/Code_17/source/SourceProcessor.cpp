@@ -165,7 +165,7 @@ void SourceProcessor::process(string program) {
 			containerList.push_back({ currToken, stmtNum });
 			string isFirst = containers.size() == 1 ? "1" : "0";
 			Database::insertParent(to_string(stmtNum), to_string(stmtNum), "1", isFirst);
-			Database::insertParent(to_string(stmtNum + 1), to_string(stmtNum), "1", isFirst);
+			Database::insertParent(to_string(stmtNum + 1), to_string(stmtNum), "1", "0");
 			isInExpr = true;
 			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName, containerList);
 		}
