@@ -117,7 +117,7 @@ string checkAndReplaceLike(string str) {
 
 string checkAndAddDirect(string whereClause, string targetTableAlias, int i, vector<int> mainRefIndex, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap) {
 	if (
-		typeToArgList[mainRefIndex[i]].first == "Parent*" &&
+		typeToArgList[mainRefIndex[i]].first == "Parent" &&
 		(
 			typeToArgList[mainRefIndex[i]].second[0] != "'_'" &&
 			!isValInMap(declarationMap, typeToArgList[mainRefIndex[i]].second[0])
@@ -132,7 +132,7 @@ string checkAndAddDirect(string whereClause, string targetTableAlias, int i, vec
 			)
 		) {
 		whereClause = appendAnd(whereClause);
-		whereClause += targetTableAlias + ".direct = '0'";
+		whereClause += targetTableAlias + ".direct = '1'";
 	}
 	return whereClause;
 }

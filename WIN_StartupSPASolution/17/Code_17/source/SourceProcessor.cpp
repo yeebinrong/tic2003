@@ -66,13 +66,17 @@ void insertForSubProc(vector<pair<string, int>> containerList, int stmtNum) {
 	for (int i = containerList.size() - 1; i > 0; i -= 1) {
 		string direct = "0";
 		Database::insertParent(to_string(stmtNum), to_string(containerList[i].second), direct, "0");
+		if (containerList[i].first == "while") {
+			
+			Database::insertWhile(to_string(stmtNum), "0", to_string(containerList[i].second), direct);
+		}
+		if (containerList[i].first == "if") {
+			
+			Database::insertIf(to_string(stmtNum), "0", to_string(containerList[i].second), direct);
+		}
 	}
 }
 
-void adhocProcParentPrint(string procedure, vector<pair<string, int>> containerList) {
-
-
-}
 
 // method for processing the source program
 // This method currently only inserts the procedure name into the database
@@ -137,8 +141,10 @@ void SourceProcessor::process(string program) {
 			insertForSpecificContainer(ifelseList, stmtNum, "if");
 			//add logic here to handle sub-procedure parent* logic ************************
 			if (procContMap[procedureList.back()].size()) {
+				
 				vector<pair<string, int>> tempContainerList = procContMap[procedureList.back()];
 				insertForSubProc(tempContainerList, stmtNum);
+
 			}
 		}
 		if (isValInVect({ "{", "then", ";" }, currToken)) {
@@ -230,6 +236,7 @@ void SourceProcessor::process(string program) {
 				i = 2; //repeat to update parent
 				repeated = true;
 				stmtNum = 0;
+				procedureList.push_back(tokens.at(1));
 			}
 			else {
 				break;
