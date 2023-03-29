@@ -19,6 +19,13 @@ string appendAnd(string clause) {
 	return clause;
 }
 
+bool checkIfIsDigitForClause(string source) {
+	if (source[0] == '\'' && isdigit(source[1])) {
+		return true;
+	}
+	return false;
+}
+
 // method to check if value is found in the vector
 bool isValInVectTwo(vector<string> vector, string value) {
 	return std::find(vector.begin(), vector.end(), value) != vector.end();
@@ -73,15 +80,15 @@ string removeWhiteSpace(string str) {
 }
 
 string checkAndReplaceLike(string str) {
-	if (str[0] == '_') {
-		str[0] = '%';
+	if (str.size() > 2 && str[0] == '\'' && str[1] == '_') {
+		str[1] = '%';
 	}
-	if (str[str.length() - 1] == '_') {
-		str[str.length() - 1] = '%';
+	if (str.size() > 2 && str[str.length() - 1] == '\'' && str[str.length() - 2] == '_') {
+		str[str.length() - 2] = '%';
 	}
 	str = removeWhiteSpace(str);
 	string temp = "";
-	for (int i = 0; i < str.size(); i += 1) {
+	for (int i = 1; i < str.size() - 1; i += 1) {
 		if (str[i] == '%') {
 			if (temp != "") {
 				temp += "|";
@@ -104,6 +111,7 @@ string checkAndReplaceLike(string str) {
 			}
 		}
 	}
+	temp = "'" + temp + "'";
 	return temp;
 }
 
@@ -111,7 +119,7 @@ string checkAndAddDirect(string whereClause, string targetTableAlias, int i, vec
 	if (
 		typeToArgList[mainRefIndex[i]].first == "Parent*" &&
 		(
-			typeToArgList[mainRefIndex[i]].second[0] != "_" &&
+			typeToArgList[mainRefIndex[i]].second[0] != "'_'" &&
 			!isValInMap(declarationMap, typeToArgList[mainRefIndex[i]].second[0])
 		) &&
 		(
@@ -130,14 +138,14 @@ string checkAndAddDirect(string whereClause, string targetTableAlias, int i, vec
 }
 
 string appendPatternClause(string clause, string tableName, string column, string value) {
-	if (value != "_") {
+	if (value != "'_'") {
 		clause = appendAnd(clause);
 		if (isExactMatch(value)) {
 			clause += tableName + "." + column + " = " + removeWhiteSpace(value);
 		}
 		else {
 			value = checkAndReplaceLike(value);
-			clause += tableName + "." + column + " LIKE '" + value + "'";
+			clause += tableName + "." + column + " LIKE " + value;
 		}
 	}
 	return clause;
@@ -185,9 +193,9 @@ bool isNotWhileOrIf(map<string, string> declarationMap, string value) {
 
 string appendWhereClause(string clause, string targetTable, string targetTableAlias, string mainSynonymType, string source, string target, map<string, string> declarationMap, bool direct) {
 	if (isValInVectTwo({ "constant", "stmt", "read", "print", "assign", "while", "if_table", "variable", "procedure" }, mainSynonymType)) {
-		if (isdigit(source[0]) && targetTable != "parents") {
+		if (checkIfIsDigitForClause(source) && targetTable != "parents") {
 			clause = appendAnd(clause);
-			clause += targetTableAlias + ".stmtNo = " + "'" + source + "'";
+			clause += targetTableAlias + ".stmtNo = " + source;
 		}
 		else {
 			if (targetTable == "pattern_table") {
@@ -199,30 +207,34 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 			else {
 				if (!isValInMap(declarationMap, source) && mainSynonymType == "procedure") {
 					clause = appendAnd(clause);
-					clause += targetTableAlias + ".procedureName = '" + source + "'";
+					clause += targetTableAlias + ".procedureName = " + source;
 				}
 				if (isValInVectTwo({ "uses", "modifies" }, targetTable)) {
-					if (isdigit(source[0])) {
+					if (source.size() > 2 && checkIfIsDigitForClause(source)) {
 						clause = appendAnd(clause);
-						clause += targetTableAlias + ".stmtNo = '" + source + "'";
+						clause += targetTableAlias + ".stmtNo = " + source;
 					}
-					else if (!isValInMap(declarationMap, target) && target != "_") {
+					else if (source != "'_'" && !isValInMap(declarationMap, source)) {
 						clause = appendAnd(clause);
-						clause += targetTableAlias + ".target = '" + target + "'";
+						clause += targetTableAlias + ".procedureName = " + source;
+					}
+					if (!isValInMap(declarationMap, target) && target != "'_'") {
+						clause = appendAnd(clause);
+						clause += targetTableAlias + ".target = " + target;
 					}
 				}
 			}
 		}
 		if (targetTable == "parents") {
-			if (isdigit(source[0])) {
+			if (checkIfIsDigitForClause(source)) {
 				clause = appendAnd(clause);
-				clause += targetTableAlias + ".parentStmtNo = '" + source + "'";
+				clause += targetTableAlias + ".parentStmtNo = " + source;
 				clause = appendAnd(clause);
 				clause += targetTableAlias + ".stmtNo != " + targetTableAlias + ".parentStmtNo";
 			}
-			if (isdigit(target[0])) {
+			if (checkIfIsDigitForClause(target)) {
 				clause = appendAnd(clause);
-				clause += targetTableAlias + ".stmtNo = '" + target + "'";
+				clause += targetTableAlias + ".stmtNo = " + target;
 			}
 			if (direct) {
 				clause = appendAnd(clause);
@@ -272,6 +284,7 @@ string checkExactOrPartialMatch(int offset, vector<string> tokens) {
 			value += "_";
 		}
 	}
+	value = "'" + value + "'";
 	return value;
 }
 
@@ -422,7 +435,13 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				}
 				isInCondition = true;
 				string source = tokens.at(i + offset);
+				if (isdigit(source[0])) {
+					source = "'" + source + "'";
+				}
 				string target = tokens.at(i + offset + 2);
+				if (isdigit(target[0])) {
+					target = "'" + target + "'";
+				}
 				// parent type always insert at front of typeToArgMap
 				typeToArgList.insert(typeToArgList.begin(), { currToken, { source, target } });
 			}
@@ -442,12 +461,22 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				if (source == "\"") {
 					offset += 1;
 					source = tokens.at(i + offset);
+					source = "'" + source + "'";
 					offset += 1;
+				}
+				else if (isdigit(source[0])) {
+					source = "'" + source + "'";
 				}
 				offset += 3;
 				string target = tokens.at(i + offset);
 				if (tokens.at(i + offset - 1)[0] != '"') {
 					target = tokens.at(i + offset - 1);
+					if (isdigit(target[0]) || target == "_") {
+						target = "'" + target + "'";
+					}
+				}
+				else {
+					target = "'" + target + "'";
 				}
 				typeToArgList.push_back({ currToken, { source, target } });
 			}
@@ -457,6 +486,9 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				string patternRef = tokens.at(i + 1);
 				// source can be _ (match all) or "variable name" (exact match) or synonymTypeVar
 				string source = checkExactMatch(offset, tokens);
+				if (isdigit(source[0]) || source == "_") {
+					source = "'" + source + "'";
+				}
 				if (source[0] != '_' && tokens.at(i + 3) == "\"") {
 					offset += 4;
 				}
