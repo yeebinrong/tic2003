@@ -41,7 +41,7 @@ void insertForAllContainer(vector<pair<string, int>> containerList, int stmtNum)
 		if (i != containerList.size() - 1) {
 			direct = "0";
 		}
-		Database::insertParent(to_string(stmtNum), to_string(containerList[i].second), direct);
+		Database::insertParent(to_string(stmtNum), to_string(containerList[i].second), direct, "0");
 	}
 }
 
@@ -65,7 +65,7 @@ void insertForSpecificContainer(vector<pair<string, int>> containerList, int stm
 void insertForSubProc(vector<pair<string, int>> containerList, int stmtNum) {
 	for (int i = containerList.size() - 1; i > 0; i -= 1) {
 		string direct = "0";
-		Database::insertParent(to_string(stmtNum), to_string(containerList[i].second), direct);
+		Database::insertParent(to_string(stmtNum), to_string(containerList[i].second), direct, "0");
 	}
 }
 
@@ -163,7 +163,9 @@ void SourceProcessor::process(string program) {
 			insertForAllContainer(containerList, stmtNum);
 			containers.push_back(currToken);
 			containerList.push_back({ currToken, stmtNum });
-			Database::insertParent(to_string(stmtNum + 1), to_string(stmtNum), "1");
+			string isFirst = containers.size() == 1 ? "1" : "0";
+			Database::insertParent(to_string(stmtNum), to_string(stmtNum), "1", isFirst);
+			Database::insertParent(to_string(stmtNum + 1), to_string(stmtNum), "1", isFirst);
 			isInExpr = true;
 			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName, containerList);
 		}

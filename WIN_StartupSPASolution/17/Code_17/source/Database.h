@@ -69,7 +69,7 @@ public:
 	static void insertNext(string stmtNo, string nextStmtNo, string direct);
 
 		// method to insert a Parent into the database
-	static void insertParent(string stmtNo, string parentStmtNo, string direct );
+	static void insertParent(string stmtNo, string parentStmtNo, string direct, string isFirst);
 
 
 	static void getQueryResults(vector<string>& results, string query);
