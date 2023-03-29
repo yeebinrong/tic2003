@@ -485,7 +485,17 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		bool direct = isDirect(unformattedTargetTable);
 		// append where clause
 		whereClause = appendWhereClause(whereClause, targetTable, targetTable, mainSynonymType, source, target, declarationMap, direct);
-		if (typeToArgList[mainRefIndex[0]].first == "Parent*" && !isValInMap(declarationMap, typeToArgList[mainRefIndex[0]].second[0])) {
+		if (
+			typeToArgList[mainRefIndex[0]].first == "Parent*" && !isValInMap(declarationMap, typeToArgList[mainRefIndex[0]].second[0]) &&
+			(
+				!isValInMap(declarationMap, typeToArgList[mainRefIndex[0]].second[1]) ||
+				(
+					// if RHS of clause is a synonym that is not while or if
+					isValInMap(declarationMap, typeToArgList[mainRefIndex[0]].second[0]) && 
+					!isValInVectTwo({ "while", "if_table" }, declarationMap[typeToArgList[mainRefIndex[0]].second[0]])
+				)
+			)
+		) {
 			whereClause = appendAnd(whereClause);
 			whereClause += targetTable + ".direct = '0'";
 		}
