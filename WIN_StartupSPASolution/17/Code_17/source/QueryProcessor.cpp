@@ -226,9 +226,11 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 			}
 		}
 		if (targetTable == "parents") {
-			if (checkIfIsDigitForClause(source)) {
-				clause = appendAnd(clause);
-				clause += targetTableAlias + ".parentStmtNo = " + source;
+			if (checkIfIsDigitForClause(source) || (isValInMap(declarationMap, source) && declarationMap[source] == "stmt")) {
+				if (checkIfIsDigitForClause(source)) {
+					clause = appendAnd(clause);
+					clause += targetTableAlias + ".parentStmtNo = " + source;
+				}
 				clause = appendAnd(clause);
 				clause += targetTableAlias + ".stmtNo != " + targetTableAlias + ".parentStmtNo";
 			}
@@ -357,7 +359,7 @@ string appendJoinOnClause(string joinClause, string mainSynonymType, string sour
 	return joinClause;
 }
 
-string appendEndOfNestedJoin(string joinClause, string mainSynonymType, string mainSource, vector<int> mainRefIndex, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap) {
+string appendEndOfNestedJoin(string joinClause, string mainSynonymType, string mainSource, string mainSynonymVar, vector<int> mainRefIndex, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap) {
 	joinClause += ") as MAIN_REF_TABLE ON " + mainSynonymType;
 	if (mainSynonymType == "variable") {
 		joinClause += ".name = MAIN_REF_TABLE";
@@ -375,9 +377,9 @@ string appendEndOfNestedJoin(string joinClause, string mainSynonymType, string m
 		string joinColumn = ".stmtNo";
 		if (
 			isValInMap(declarationMap, mainSource) &&
-			isValInVectTwo({ "stmt", "while", "if_table" }, mainSynonymType) &&
-			declarationMap[mainSource] == mainSynonymType
-			) {
+			formatTableName(typeToArgList[mainRefIndex[0]].first) == "parents" &&
+			mainSource == mainSynonymVar
+		) {
 			joinColumn = ".parentStmtNo";
 		}
 		joinClause += ".stmtNo = MAIN_REF_TABLE" + joinColumn;
@@ -667,7 +669,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				joinedSynonymVar.push_back(source);
 			}
 			// join RHS of target table arg if not already joined
-			if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedSynonymVar, target) && !isValInVectTwo({ mainTable, declarationMap[source] }, declarationMap[target])) {
+			if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedSynonymVar, target) && !isValInVectTwo({ mainTable }, declarationMap[target])) {
 				joinClause = appendJoinOnClause(
 					joinClause,
 					mainSynonymType,
@@ -702,7 +704,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			joinClause += " WHERE " + refWhereClause;
 		}
 		// close off nested join
-		joinClause = appendEndOfNestedJoin(joinClause, mainSynonymType, mainSource, mainRefIndex, typeToArgList, declarationMap);
+		joinClause = appendEndOfNestedJoin(joinClause, mainSynonymType, mainSource, mainSynonymVar, mainRefIndex, typeToArgList, declarationMap);
 	}
 	string irrelevantClause = "";
 	// ------------------------------------- CHECK ALL REMAINING IRRELEVANT CLAUSES -------------------------------------
