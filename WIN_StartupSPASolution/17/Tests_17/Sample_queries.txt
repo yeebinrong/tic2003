@@ -256,10 +256,10 @@ none
 52 - identify all statements that modifies any variable
 stmt s;
 Select s such that modifies (s,_)
-1, 2, 3, 6, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 34
+1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 34
 5000 
 53 - identify all assignment that uses any variable
 assign a;
 Select a such that uses (a,_)
-3, 9, 10, 11, 18, 19, 21, 25, 30, 31
+9, 10, 11, 18, 19, 21, 25, 30, 31
 5000
