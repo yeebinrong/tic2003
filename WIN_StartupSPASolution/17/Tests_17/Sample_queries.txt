@@ -201,7 +201,7 @@ Select s such that Parent* (w,s) such that Parent* (i, w)
 41 - identify statements within an if container that is nested within a loop
 stmt s; while w; if i;
 Select s such that Parent* (i,s) such that Parent* (w, i)
-12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34
+13, 14, 15, 16, 17, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34
 5000
 42 - identify assignment that uses count and uses pattern
 assign a; variable v;
@@ -221,7 +221,7 @@ Select a such that pattern a (_, _"count+1"_)
 45 - identify statements who are child statement of a parent statement
 stmt s1, s2; 
 Select s2 such that Parent (s1, s2)
-5, 6, 7, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 30, 31
+5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 30, 31
 5000
 46 -  identify variables who are used by procedure updateNum and if there are variables used by procedure computeMultiple
 variable v1, v2;

@@ -299,7 +299,7 @@ string appendJoinOnClause(string joinClause, string mainSynonymType, string sour
 	) {
 		string sourceColumn = ".stmtNo";
 		string joinColumn = ".stmtNo";
-		if (sourceTable == "parents") {
+		if (sourceTable == "parents" && (isValInMap(declarationMap, target) && !isValInVectTwo({ "while", "if_table" }, declarationMap[target]))) {
 			if (isValInMap(declarationMap, target) && isValInVectTwo({ "stmt" }, declarationMap[target])) {
 				sourceColumn = ".parentStmtNo";
 			}
@@ -353,18 +353,6 @@ string appendJoinOnClause(string joinClause, string mainSynonymType, string sour
 		else {
 			joinClause += ".target";
 		}
-	}
-	return joinClause;
-}
-
-string appendSourceAndTargetJoin(string joinClause, string mainSynonymType, string source, string sourceTableAlias, string target, string targetTableAlias, string patternRef, string mainTable, string mainTableAlias, string mainSource, string mainTarget, map<string, string> declarationMap) {
-	// join LHS of target table arg if not already joined
-	if (isValInMap(declarationMap, source) && !isValInVectTwo({ mainSynonymType, mainTable }, declarationMap[source])) {
-		joinClause = appendJoinOnClause(joinClause, mainSynonymType, source, target, patternRef, declarationMap[source], sourceTableAlias, mainTable, mainTableAlias, mainSource, mainTarget, declarationMap);
-	}
-	// join RHS of target table arg if not already joined
-	if (isValInMap(declarationMap, target) && !isValInVectTwo({ mainSynonymType, mainTable, declarationMap[source] }, declarationMap[target])) {
-		joinClause = appendJoinOnClause(joinClause, mainSynonymType, source, target, patternRef, declarationMap[target], targetTableAlias, mainTable, mainTableAlias, mainSource, mainTarget, declarationMap);
 	}
 	return joinClause;
 }
@@ -657,18 +645,8 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 					declarationMap
 				);
 			}
-			//// Join LHS table and RHS table of clause
-			//joinClause = appendSourceAndTargetJoin(
-			//	joinClause,
-			//	mainSynonymType,
-			//	source, refSourceAlias,
-			//	target, refTargetAlias,
-			//	patternRef, mainTable, mainTableAlias,
-			//	mainSource, mainTarget,
-			//	declarationMap
-			//);
 			// join LHS of target table arg if not already joined
-			if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedSynonymVar, source) && !isValInVectTwo({ mainSynonymType, mainTable }, declarationMap[source])) {
+			if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedSynonymVar, source) && !isValInVectTwo({ mainTable }, declarationMap[source])) {
 				joinClause = appendJoinOnClause(
 					joinClause,
 					mainSynonymType,
@@ -681,7 +659,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				joinedSynonymVar.push_back(source);
 			}
 			// join RHS of target table arg if not already joined
-			if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedSynonymVar, target) && !isValInVectTwo({ mainSynonymType, mainTable, declarationMap[source] }, declarationMap[target])) {
+			if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedSynonymVar, target) && !isValInVectTwo({ mainTable, declarationMap[source] }, declarationMap[target])) {
 				joinClause = appendJoinOnClause(
 					joinClause,
 					mainSynonymType,
