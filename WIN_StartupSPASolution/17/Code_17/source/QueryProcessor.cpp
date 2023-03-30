@@ -236,6 +236,7 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 				clause = appendAnd(clause);
 				clause += targetTableAlias + ".stmtNo = " + target;
 			}
+
 			if (direct) {
 				clause = appendAnd(clause);
 				clause += targetTableAlias + ".direct = '1'";
@@ -302,7 +303,12 @@ string appendJoinOnClause(string joinClause, string mainSynonymType, string sour
 			if (isValInMap(declarationMap, target) && isValInVectTwo({ "stmt" }, declarationMap[target])) {
 				sourceColumn = ".parentStmtNo";
 			}
-			if (isValInMap(declarationMap, target) && mainSynonymType != declarationMap[target] && isValInVectTwo({ "while", "if_table" }, declarationMap[target])) {
+			if (
+				isValInMap(declarationMap, target) &&
+				mainSynonymType != declarationMap[target] &&
+				isValInVectTwo({ "while", "if_table" }, declarationMap[target]) &&
+				isValInVectTwo({ "while", "if_table" }, mainSynonymType)
+			) {
 				joinColumn = ".parentStmtNo";
 			}
 		}
@@ -525,6 +531,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 	vector<string> mappedIndex; // track for typeToArgMap already used
 	vector<int> mainRefIndex; // track index of clauses that are related to main synonym
 	vector<string> mainRefSynonym; // track synonyms of clauses that are related to main synonym, directly or indirectly
+	vector<string> joinedSynonymVar; // track synonym already joined
 	mainRefSynonym.push_back(mainSynonymVar); // track all the main synonym var being used (needed for multiple synonyms)
 	// map all related clauses
 	bool loopAgain = true;
@@ -562,7 +569,9 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		string targetTable = formatTableName(typeToArgList[mainRefIndex[0]].first);
 		string unformattedTargetTable = typeToArgList[mainRefIndex[0]].first;
 		string source = typeToArgList[mainRefIndex[0]].second[0];
+		string sourceTableAlias = isValInMap(declarationMap, source) ? declarationMap[source] : "";
 		string target = typeToArgList[mainRefIndex[0]].second[1];
+		string targetTableAlias = isValInMap(declarationMap, target) ? declarationMap[target] : "";
 		string patternRef = "";
 		// patternRef refers to the var for assign used for the pattern
 		// In the example below, a is the patternRef
@@ -575,16 +584,38 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		// eg. Select a such that Uses (a, v)
 
 		// Join the clause table
-		joinClause = appendJoinOnClause(joinClause, mainSynonymType, source, target, patternRef, targetTable, targetTable, mainSynonymType, mainSynonymType, source, target, declarationMap);
-		// Join LHS table and RHS table of clause
-		joinClause = appendSourceAndTargetJoin(
-			joinClause,
-			mainSynonymType,
-			source, isValInMap(declarationMap, source) ? declarationMap[source] : "",
-			target, isValInMap(declarationMap, target) ? declarationMap[target] : "",
-			patternRef, mainSynonymType, mainSynonymType,
+		joinClause = appendJoinOnClause(
+			joinClause, mainSynonymType,
+			source, target, patternRef,
+			targetTable, targetTable,
+			mainSynonymType, mainSynonymType,
 			source, target, declarationMap
 		);
+		// join LHS of target table arg if not already joined
+		if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedSynonymVar, source) && !isValInVectTwo({ mainSynonymType }, declarationMap[source])) {
+			joinClause = appendJoinOnClause(
+				joinClause,
+				mainSynonymType,
+				source, target,
+				patternRef, declarationMap[source],
+				sourceTableAlias, mainSynonymType, mainSynonymType,
+				source, target,
+				declarationMap
+			);
+			joinedSynonymVar.push_back(source);
+		}
+		// join RHS of target table arg if not already joined
+		if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedSynonymVar, source) && !isValInVectTwo({ mainSynonymType, declarationMap[source] }, declarationMap[target])) {
+			joinClause = appendJoinOnClause(
+				joinClause,
+				mainSynonymType,
+				source, target,
+				patternRef, declarationMap[target],
+				targetTableAlias, mainSynonymType, mainSynonymType,
+				source, target,
+				declarationMap);
+			joinedSynonymVar.push_back(target);
+		}
 		bool direct = isDirect(unformattedTargetTable);
 		// Append where clause
 		whereClause = appendWhereClause(whereClause, targetTable, targetTable, mainSynonymType, source, target, declarationMap, direct);
@@ -610,26 +641,57 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				patternRef = typeToArgList[mainRefIndex[i]].second[2];
 			}
 			string targetTableAlias = "t_" + to_string(i + 1); // the alias for table belonging the clause
-			string refSourceAlias = "t_source_" + to_string(i + 1); // the alias for table belonging to LHS of the clause
-			string refTargetAlias = "t_target_" + to_string(i + 1); // the alias for table belonging to RHS of the clause
+			string refSourceAlias = source; //"t_source_" + to_string(i + 1); // the alias for table belonging to LHS of the clause
+			string refTargetAlias = target; //"t_target_" + to_string(i + 1); // the alias for table belonging to RHS of the clause
 			if (i == 0) {
 				// append nested join if is the first loop
 				joinClause += " INNER JOIN (SELECT * FROM " + mainTable + " AS " + mainTableAlias;
 			}
 			else {
 				// else append inner join clause
-				joinClause = appendJoinOnClause(joinClause, mainSynonymType, source, target, patternRef, targetTable, targetTableAlias, mainTable, mainTableAlias, mainSource, mainTarget, declarationMap);
+				joinClause = appendJoinOnClause(
+					joinClause, mainSynonymType,
+					source, target,
+					patternRef, targetTable, targetTableAlias,
+					mainTable, mainTableAlias, mainSource, mainTarget,
+					declarationMap
+				);
 			}
-			// Join LHS table and RHS table of clause
-			joinClause = appendSourceAndTargetJoin(
-				joinClause,
-				mainSynonymType,
-				source, refSourceAlias,
-				target, refTargetAlias,
-				patternRef, mainTable, mainTableAlias,
-				mainSource, mainTarget,
-				declarationMap
-			);
+			//// Join LHS table and RHS table of clause
+			//joinClause = appendSourceAndTargetJoin(
+			//	joinClause,
+			//	mainSynonymType,
+			//	source, refSourceAlias,
+			//	target, refTargetAlias,
+			//	patternRef, mainTable, mainTableAlias,
+			//	mainSource, mainTarget,
+			//	declarationMap
+			//);
+			// join LHS of target table arg if not already joined
+			if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedSynonymVar, source) && !isValInVectTwo({ mainSynonymType, mainTable }, declarationMap[source])) {
+				joinClause = appendJoinOnClause(
+					joinClause,
+					mainSynonymType,
+					source, target,
+					patternRef, declarationMap[source],
+					refSourceAlias, mainTable, mainTableAlias,
+					mainSource, mainTarget,
+					declarationMap
+				);
+				joinedSynonymVar.push_back(source);
+			}
+			// join RHS of target table arg if not already joined
+			if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedSynonymVar, target) && !isValInVectTwo({ mainSynonymType, mainTable, declarationMap[source] }, declarationMap[target])) {
+				joinClause = appendJoinOnClause(
+					joinClause,
+					mainSynonymType,
+					source, target,
+					patternRef, declarationMap[target],
+					refTargetAlias, mainTable, mainTableAlias,
+					mainSource, mainTarget,
+					declarationMap);
+				joinedSynonymVar.push_back(target);
+			}
 			bool targetDirect = isDirect(unformattedTargetTable);
 			// Append where clause
 			refWhereClause = appendWhereClause(
@@ -639,6 +701,15 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				source, target,
 				declarationMap, targetDirect
 			);
+			if (
+				isValInMap(declarationMap, source) &&
+				isValInVectTwo({ "while", "if_table" }, declarationMap[target]) &&
+				isValInMap(declarationMap, target) &&
+				isValInVectTwo({ "while", "if_table" }, declarationMap[source])
+			) {
+				refWhereClause = appendAnd(refWhereClause);
+				refWhereClause += "CAST(" + source + ".parentStmtNo as INT) < CAST(" + target + ".parentStmtNo as INT)";
+			}
 			refWhereClause = checkAndAddDirect(refWhereClause, targetTableAlias, i, mainRefIndex, typeToArgList, declarationMap);
 		}
 		if (refWhereClause != "") {

@@ -196,12 +196,12 @@ num4
 40 - identify statements within a loop nested in if
 stmt s; while w; if i;
 Select s such that Parent* (w,s) such that Parent* (i, w)
-8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32  33, 34
+8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34
 5000
 41 - identify statements within an if container that is nested within a loop
 stmt s; while w; if i;
 Select s such that Parent* (i,s) such that Parent* (w, i)
-12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32  33, 34
+12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34
 5000
 42 - identify assignment that uses count and uses pattern
 assign a; variable v;
