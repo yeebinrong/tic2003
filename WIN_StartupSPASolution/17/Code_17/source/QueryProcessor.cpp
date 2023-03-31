@@ -26,6 +26,13 @@ bool checkIfIsDigitForClause(string source) {
 	return false;
 }
 
+string toLowerCase(string val) {
+	//Apply tolower to each character of string
+	std::transform(val.begin(), val.end(), val.begin(),
+		[](unsigned char c) { return std::tolower(c); });
+	return val;
+}
+
 // method to check if value is found in the vector
 bool isValInVectTwo(vector<string> vector, string value) {
 	return std::find(vector.begin(), vector.end(), value) != vector.end();
@@ -68,7 +75,7 @@ bool isExactMatch(string str) {
 }
 
 bool isDirect(string targetTable) {
-	if (isValInVectTwo({ "Next*","Parent*" }, targetTable)) {
+	if (isValInVectTwo({ "next*","parent*" }, targetTable)) {
 		return false;
 	}
 	return true;
@@ -168,27 +175,20 @@ string appendMainClause(string clause, string mainSynonymType) {
 }
 
 string formatTableName(string tableName) {
+	tableName = toLowerCase(tableName);
 	if (tableName == "if") {
 		return "if_table";
 	}
 	else if (tableName == "pattern") {
 		return "pattern_table";
 	}
-	else if (tableName == "Parent" || tableName == "Parent*") {
+	else if (tableName == "parent" || tableName == "parent*") {
 		return "parents";
 	}
-	else if (tableName == "Next" || tableName == "Next*") {
+	else if (tableName == "next" || tableName == "next*") {
 		return "nexts";
 	}
-	else if (isupper(tableName[0])) {
-		tableName[0] = tolower(tableName[0]);
-		return tableName;
-	}
 	return tableName;
-}
-
-bool isNotWhileOrIf(map<string, string> declarationMap, string value) {
-	return isValInMap(declarationMap, value) && !isValInVectTwo({ "while", "if_table" }, declarationMap[value]);
 }
 
 string appendWhereClause(string clause, string targetTable, string targetTableAlias, string mainSynonymType, string source, string target, map<string, string> declarationMap, bool direct) {
@@ -226,9 +226,11 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 			}
 		}
 		if (targetTable == "parents") {
-			if (checkIfIsDigitForClause(source)) {
-				clause = appendAnd(clause);
-				clause += targetTableAlias + ".parentStmtNo = " + source;
+			if (checkIfIsDigitForClause(source) || (isValInMap(declarationMap, source) && declarationMap[source] == "stmt")) {
+				if (checkIfIsDigitForClause(source)) {
+					clause = appendAnd(clause);
+					clause += targetTableAlias + ".parentStmtNo = " + source;
+				}
 				clause = appendAnd(clause);
 				clause += targetTableAlias + ".stmtNo != " + targetTableAlias + ".parentStmtNo";
 			}
@@ -299,7 +301,7 @@ string appendJoinOnClause(string joinClause, string mainSynonymType, string sour
 	) {
 		string sourceColumn = ".stmtNo";
 		string joinColumn = ".stmtNo";
-		if (sourceTable == "parents") {
+		if (sourceTable == "parents" && (isValInMap(declarationMap, target) && !isValInVectTwo({ "while", "if_table" }, declarationMap[target]))) {
 			if (isValInMap(declarationMap, target) && isValInVectTwo({ "stmt" }, declarationMap[target])) {
 				sourceColumn = ".parentStmtNo";
 			}
@@ -357,19 +359,7 @@ string appendJoinOnClause(string joinClause, string mainSynonymType, string sour
 	return joinClause;
 }
 
-string appendSourceAndTargetJoin(string joinClause, string mainSynonymType, string source, string sourceTableAlias, string target, string targetTableAlias, string patternRef, string mainTable, string mainTableAlias, string mainSource, string mainTarget, map<string, string> declarationMap) {
-	// join LHS of target table arg if not already joined
-	if (isValInMap(declarationMap, source) && !isValInVectTwo({ mainSynonymType, mainTable }, declarationMap[source])) {
-		joinClause = appendJoinOnClause(joinClause, mainSynonymType, source, target, patternRef, declarationMap[source], sourceTableAlias, mainTable, mainTableAlias, mainSource, mainTarget, declarationMap);
-	}
-	// join RHS of target table arg if not already joined
-	if (isValInMap(declarationMap, target) && !isValInVectTwo({ mainSynonymType, mainTable, declarationMap[source] }, declarationMap[target])) {
-		joinClause = appendJoinOnClause(joinClause, mainSynonymType, source, target, patternRef, declarationMap[target], targetTableAlias, mainTable, mainTableAlias, mainSource, mainTarget, declarationMap);
-	}
-	return joinClause;
-}
-
-string appendEndOfNestedJoin(string joinClause, string mainSynonymType, string mainSource, vector<int> mainRefIndex, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap) {
+string appendEndOfNestedJoin(string joinClause, string mainSynonymType, string mainSource, string mainSynonymVar, vector<int> mainRefIndex, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap) {
 	joinClause += ") as MAIN_REF_TABLE ON " + mainSynonymType;
 	if (mainSynonymType == "variable") {
 		joinClause += ".name = MAIN_REF_TABLE";
@@ -387,9 +377,9 @@ string appendEndOfNestedJoin(string joinClause, string mainSynonymType, string m
 		string joinColumn = ".stmtNo";
 		if (
 			isValInMap(declarationMap, mainSource) &&
-			isValInVectTwo({ "stmt", "while", "if_table" }, mainSynonymType) &&
-			declarationMap[mainSource] == mainSynonymType
-			) {
+			formatTableName(typeToArgList[mainRefIndex[0]].first) == "parents" &&
+			mainSource == mainSynonymVar
+		) {
 			joinColumn = ".parentStmtNo";
 		}
 		joinClause += ".stmtNo = MAIN_REF_TABLE" + joinColumn;
@@ -433,7 +423,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		}
 		else if (isEndOfDeclaration) {
 			// Start parsing queries
-			if (currToken == "Parent") {
+			if (toLowerCase(currToken) == "parent") {
 				int offset = 2;
 				if (tokens.at(i + 1) == "*") {
 					offset = 3;
@@ -449,18 +439,18 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 					target = "'" + target + "'";
 				}
 				// parent type always insert at front of typeToArgMap
-				typeToArgList.insert(typeToArgList.begin(), { currToken, { source, target } });
+				typeToArgList.insert(typeToArgList.begin(), { toLowerCase(currToken), { source, target } });
 			}
-			else if (currToken == "Next") {
+			else if (toLowerCase(currToken) == "next") {
 				isInCondition = true;
 				string source = tokens.at(i + 2);
 				string target = tokens.at(i + 4);
-				typeToArgList.push_back({ currToken, { source, target } });
+				typeToArgList.push_back({ toLowerCase(currToken), { source, target } });
 			}
-			else if (currToken == "Next*") {
+			else if (toLowerCase(currToken) == "next*") {
 				isInCondition = true;
 			}
-			else if (isValInVectTwo({ "Uses", "Modifies" }, currToken)) {
+			else if (isValInVectTwo({ "uses", "modifies" }, toLowerCase(currToken))) {
 				isInCondition = true;
 				int offset = 2;
 				string source = tokens.at(i + offset);
@@ -484,9 +474,9 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				else {
 					target = "'" + target + "'";
 				}
-				typeToArgList.push_back({ currToken, { source, target } });
+				typeToArgList.push_back({ toLowerCase(currToken), { source, target } });
 			}
-			else if (currToken == "pattern") {
+			else if (toLowerCase(currToken) == "pattern") {
 				isInCondition = true;
 				int offset = i + 3;
 				string patternRef = tokens.at(i + 1);
@@ -503,7 +493,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				}
 				// target can be _ (match all) or "variable name" (exact match) or _"variable"_ (partial match)
 				string target = checkExactOrPartialMatch(offset, tokens);
-				typeToArgList.push_back({ currToken, { source, target, patternRef } });
+				typeToArgList.push_back({ toLowerCase(currToken), { source, target, patternRef } });
 			}
 		}
 		else if (currToken == ";" || currToken == ",") {
@@ -592,7 +582,11 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			source, target, declarationMap
 		);
 		// join LHS of target table arg if not already joined
-		if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedSynonymVar, source) && !isValInVectTwo({ mainSynonymType }, declarationMap[source])) {
+		if (
+			isValInMap(declarationMap, source) &&
+			!isValInVectTwo({ mainSynonymType }, declarationMap[source]) &&
+			!isValInVectTwo(joinedSynonymVar, source)
+		) {
 			joinClause = appendJoinOnClause(
 				joinClause,
 				mainSynonymType,
@@ -605,7 +599,11 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			joinedSynonymVar.push_back(source);
 		}
 		// join RHS of target table arg if not already joined
-		if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedSynonymVar, source) && !isValInVectTwo({ mainSynonymType, declarationMap[source] }, declarationMap[target])) {
+		if (
+			isValInMap(declarationMap, target) &&
+			!isValInVectTwo({ mainSynonymType }, declarationMap[target]) &&
+			!isValInVectTwo(joinedSynonymVar, source)
+		) {
 			joinClause = appendJoinOnClause(
 				joinClause,
 				mainSynonymType,
@@ -657,18 +655,8 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 					declarationMap
 				);
 			}
-			//// Join LHS table and RHS table of clause
-			//joinClause = appendSourceAndTargetJoin(
-			//	joinClause,
-			//	mainSynonymType,
-			//	source, refSourceAlias,
-			//	target, refTargetAlias,
-			//	patternRef, mainTable, mainTableAlias,
-			//	mainSource, mainTarget,
-			//	declarationMap
-			//);
 			// join LHS of target table arg if not already joined
-			if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedSynonymVar, source) && !isValInVectTwo({ mainSynonymType, mainTable }, declarationMap[source])) {
+			if (isValInMap(declarationMap, source) && !isValInVectTwo(joinedSynonymVar, source) && !isValInVectTwo({ mainTable }, declarationMap[source])) {
 				joinClause = appendJoinOnClause(
 					joinClause,
 					mainSynonymType,
@@ -681,7 +669,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				joinedSynonymVar.push_back(source);
 			}
 			// join RHS of target table arg if not already joined
-			if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedSynonymVar, target) && !isValInVectTwo({ mainSynonymType, mainTable, declarationMap[source] }, declarationMap[target])) {
+			if (isValInMap(declarationMap, target) && !isValInVectTwo(joinedSynonymVar, target) && !isValInVectTwo({ mainTable }, declarationMap[target])) {
 				joinClause = appendJoinOnClause(
 					joinClause,
 					mainSynonymType,
@@ -716,7 +704,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			joinClause += " WHERE " + refWhereClause;
 		}
 		// close off nested join
-		joinClause = appendEndOfNestedJoin(joinClause, mainSynonymType, mainSource, mainRefIndex, typeToArgList, declarationMap);
+		joinClause = appendEndOfNestedJoin(joinClause, mainSynonymType, mainSource, mainSynonymVar, mainRefIndex, typeToArgList, declarationMap);
 	}
 	string irrelevantClause = "";
 	// ------------------------------------- CHECK ALL REMAINING IRRELEVANT CLAUSES -------------------------------------
