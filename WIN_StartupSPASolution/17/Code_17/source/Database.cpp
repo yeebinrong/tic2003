@@ -70,6 +70,10 @@ void Database::initialize() {
 	executeQuery("DROP TABLE IF EXISTS uses");
 	executeQuery("CREATE TABLE uses ( stmtNo VARCHAR(255), procedureName VARCHAR(255), target VARCHAR(255), PRIMARY KEY (stmtNo, procedureName, target))");
 
+	// drop/create the existing calls table (if any)
+	executeQuery("DROP TABLE IF EXISTS calls");
+	executeQuery("CREATE TABLE calls (sourceProc VARCHAR(255), targetProc VARCHAR(255), parentStmtNo VARCHAR(255), stmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0',  PRIMARY KEY (sourceProc, targetProc))");
+
 	// initialize the result vector
 	dbResults = vector<vector<string>>();
 }
@@ -170,6 +174,11 @@ void Database::insertNext(string stmtNo, string nextStmtNo, string direct) {
 // method to insert a Parent into the database
 void Database::insertParent(string stmtNo, string parentStmtNo, string direct, string isFirst) {
 	Database::executeQuery(generateInsertQuery("parents", { "stmtNo", "parentStmtNo", "direct", "isFirst"}, {stmtNo, parentStmtNo, direct, isFirst}));
+}
+
+// method to insert a Call into the database
+void Database::insertCall(string sourceProc, string targetProc, string parentStmtNo, string stmtNo, string direct) {
+	Database::executeQuery(generateInsertQuery("calls", { "sourceProc", "targetProc", "parentStmtNo", "stmtNo", "direct" }, { sourceProc, targetProc, parentStmtNo, stmtNo, direct }));
 }
 
 

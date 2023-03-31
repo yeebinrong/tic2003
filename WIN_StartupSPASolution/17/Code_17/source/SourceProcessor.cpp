@@ -8,8 +8,46 @@ bool isValInVect(vector<string> vector, string value) {
 	return std::find(vector.begin(), vector.end(), value) != vector.end();
 }
 
+//inherit use/mod relationship to container header
+void insertUseModForContHeader(vector<pair<string, int>> containerList, string procedureName, string varName, string mode) {
+
+	for (int i = containerList.size() - 1; i >= 0; i -= 1) {
+		string containerHeader = containerList[i].first;
+		int containerHeaderNum = containerList[i].second;
+		if (containerList[i].first == "main") {
+			continue;
+		}
+		if (mode == "use") {
+			Database::insertUses(to_string(containerHeaderNum), procedureName, varName);
+		}
+		if (mode == "mod") {
+			Database::insertModifies(to_string(containerHeaderNum), procedureName, varName);
+		}
+	}
+}
+
+
+//inherit use/mod relationship to all procedures that calls currProc
+void insertForIndirectUseMod(string currProc, string varName, map<string, vector<pair<string, int>>> procCallMap, string mode) {
+	vector<pair<string, int>> sourceProcList = procCallMap[currProc];
+	for (int i = sourceProcList.size() - 1; i >= 0; i -= 1) {
+		string sourceProc = sourceProcList[i].first;
+		int sourceCallStmtNo = sourceProcList[i].second;
+		if (mode == "use") {
+			cout << "insert uses:" << sourceCallStmtNo << ", varname:" << varName << endl;
+			Database::insertUses(to_string(sourceCallStmtNo), sourceProc, varName);
+		}
+		if (mode == "mod") {
+			Database::insertModifies(to_string(sourceCallStmtNo), sourceProc, varName);
+		}
+		//recursively call function to insert indirect call  for procedures that calls sourceProc
+		insertForIndirectUseMod(sourceProc, varName, procCallMap, mode);
+	}
+}
+
 // method to insert variable and constants from expr
-void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset, int stmtNum, string procedureName, vector<pair<string, int>> containerList) {
+void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset,
+		int stmtNum, string procedureName, vector<pair<string, int>> containerList, map<string, vector<pair<string, int>>> procCallMap) {
 	int offset = initialOffset;
 	string offsetToken = tokens.at(currIdx + offset);
 	string concatStr;
@@ -21,6 +59,7 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 			if (isalpha(offsetToken[0])) {
 				Database::insertVariable(procedureName, offsetToken, to_string(stmtNum));
 				Database::insertUses(to_string(stmtNum), procedureName, offsetToken);
+				insertForIndirectUseMod(procedureName, offsetToken, procCallMap, "use");
 				for (int i = containerList.size() - 1; i > 0; i -= 1) {
 					Database::insertUses(to_string(containerList[i].second), procedureName, offsetToken);
 				}
@@ -36,10 +75,13 @@ void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx
 }
 
 void insertForAllContainer(vector<pair<string, int>> containerList, int stmtNum) {
-	for (int i = containerList.size() - 1; i > 0; i -= 1) {
+	for (int i = containerList.size() - 1; i >= 0; i -= 1) {
 		string direct = "1";
 		if (i != containerList.size() - 1) {
 			direct = "0";
+		}
+		if (containerList[i].first == "main") {
+			continue;
 		}
 		Database::insertParent(to_string(stmtNum), to_string(containerList[i].second), direct, "0");
 	}
@@ -62,20 +104,41 @@ void insertForSpecificContainer(vector<pair<string, int>> containerList, int stm
 	}
 }
 
-void insertForSubProc(vector<pair<string, int>> containerList, int stmtNum) {
+void insertParentForSubProc(vector<pair<string, int>> containerList, int stmtNum) {
 	for (int i = containerList.size() - 1; i > 0; i -= 1) {
 		string direct = "0";
 		Database::insertParent(to_string(stmtNum), to_string(containerList[i].second), direct, "0");
 		if (containerList[i].first == "while") {
-			
 			Database::insertWhile(to_string(stmtNum), "0", to_string(containerList[i].second), direct);
 		}
 		if (containerList[i].first == "if") {
-			
 			Database::insertIf(to_string(stmtNum), "0", to_string(containerList[i].second), direct);
 		}
 	}
 }
+
+//insert call for direct and inherit to all direct/indirect procedures that calls targetProc
+void insertForAllCalls(string targetProc, int currProcCallNo, string currProc, map<string, vector<pair<string, int>>> procCallMap) {
+	vector<pair<string, int>> sourceProcList = procCallMap[currProc];
+	for (int i = sourceProcList.size() - 1; i >= 0; i -= 1) {
+		string sourceProc = sourceProcList[i].first;
+		int sourceCallStmtNo = sourceProcList[i].second;
+		if (targetProc == currProc) {
+			//occurs only for the 1st call of function
+			Database::insertCall(sourceProc, targetProc, to_string(sourceCallStmtNo), to_string(sourceCallStmtNo), "1");
+		}
+		else {
+			//occurs for remaining recursive calls
+			Database::insertCall(sourceProc, targetProc, to_string(sourceCallStmtNo), to_string(currProcCallNo), "0");
+		}
+		//recursively call function to insert indirect call  for procedures that calls sourceProc
+		insertForAllCalls(targetProc, sourceCallStmtNo, sourceProc, procCallMap);
+	}
+}
+
+
+
+
 
 
 // method for processing the source program
@@ -103,6 +166,7 @@ void SourceProcessor::process(string program) {
 	vector<pair<string, int>> whileList;
 	vector<pair<string, int>> ifelseList;
 	map<string, vector<pair<string, int>>> procContMap; //store procedure and vector of containers within procedure
+	map<string, vector<pair<string, int>>> procCallMap; //store procedure and vector of procs that calls this proc
 	vector<string> procedureList; 
 	procedureList.push_back(procedureName);
 	containerList.push_back({ "main", 1 });
@@ -143,7 +207,7 @@ void SourceProcessor::process(string program) {
 			if (procContMap[procedureList.back()].size()) {
 				
 				vector<pair<string, int>> tempContainerList = procContMap[procedureList.back()];
-				insertForSubProc(tempContainerList, stmtNum);
+				insertParentForSubProc(tempContainerList, stmtNum);
 
 			}
 		}
@@ -173,7 +237,7 @@ void SourceProcessor::process(string program) {
 			Database::insertParent(to_string(stmtNum), to_string(stmtNum), "1", isFirst);
 			Database::insertParent(to_string(stmtNum + 1), to_string(stmtNum), "1", "0");
 			isInExpr = true;
-			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName, containerList);
+			insertExpr({ "{", "then", ";" }, tokens, i, 1, stmtNum, procedureName, containerList, procCallMap);
 		}
 		// ensure not out of bounds
 		else if (currToken != "}") {
@@ -183,31 +247,44 @@ void SourceProcessor::process(string program) {
 				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertAssignment(to_string(stmtNum));
 				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
-				for (int i = containerList.size() - 1; i > 0; i -= 1) {
-					Database::insertModifies(to_string(containerList[i].second), procedureName, currToken);
-				}
+				insertForIndirectUseMod(procedureName, currToken, procCallMap, "mod");
+				insertUseModForContHeader(containerList, procedureName, currToken, "mod");
+				//for (int i = containerList.size() - 1; i >= 0; i -= 1) {
+				//	Database::insertModifies(to_string(containerList[i].second), procedureName, currToken);
+				//}
 				// offset two to skip equal sign
-				insertExpr({ ";" }, tokens, i, 2, stmtNum, procedureName, containerList);
+				insertExpr({ ";" }, tokens, i, 2, stmtNum, procedureName, containerList, procCallMap);
 			}
 			else if (prevToken == "read") {
 				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertRead(to_string(stmtNum));
 				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
-				for (int i = containerList.size() - 1; i > 0; i -= 1) {
-					Database::insertModifies(to_string(containerList[i].second), procedureName, currToken);
-				}
+				insertForIndirectUseMod(procedureName, currToken, procCallMap, "mod");
+				insertUseModForContHeader(containerList, procedureName, currToken, "mod");
+				//for (int i = containerList.size() - 1; i >= 0; i -= 1) {
+				//	Database::insertModifies(to_string(containerList[i].second), procedureName, currToken);
+				//}
 			}
 			else if (prevToken == "print") {
 				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertPrint(to_string(stmtNum));
 				Database::insertUses(to_string(stmtNum), procedureName, currToken);
-				for (int i = containerList.size() - 1; i > 0; i -= 1) {
-					Database::insertUses(to_string(containerList[i].second), procedureName, currToken);
-				}
+				insertForIndirectUseMod(procedureName, currToken, procCallMap, "use");
+				insertUseModForContHeader(containerList, procedureName, currToken, "use");
+				//for (int i = containerList.size() - 1; i >= 0; i -= 1) {
+				//	Database::insertUses(to_string(containerList[i].second), procedureName, currToken);
+				//}
 			}
 			else if (prevToken == "call") {
 				//Database::insertModifies(to_string(stmtNum), procedureList.back(), currToken);
 				//Database::insertUses(to_string(stmtNum), procedureList.back(), currToken);
+				//update info with who calls procedure 'currToken'
+				if (procCallMap.find(currToken) == procCallMap.end()) {
+					procCallMap.insert(pair<string, vector<pair<string, int>>>(currToken, { {procedureList.back(),stmtNum} }));
+				}
+				else {
+					procCallMap[currToken].push_back({ procedureList.back(),stmtNum });
+				}
 				//merge and store container list onto map, for reference when handling parent* relation
 				vector<pair<string, int>> mergedContainerList = containerList;
 				mergedContainerList.insert(mergedContainerList.end(), procContMap[procedureList.back()].begin(), procContMap[procedureList.back()].end());
@@ -223,6 +300,8 @@ void SourceProcessor::process(string program) {
 
 			}
 			else if (prevToken == "procedure") {
+				//handle insertCalls
+				insertForAllCalls(currToken, stmtNum, currToken, procCallMap);
 				Database::insertProcedure(currToken);
 				//procedureList.back() holds the current procedure that's being handled
 				procedureList.push_back(currToken);

@@ -226,7 +226,7 @@ Select s2 such that Parent (s1, s2)
 46 -  identify variables who are used by procedure updateNum and if there are variables used by procedure computeMultiple
 variable v1, v2;
 Select v1 such that Uses ("updateNum", v1) such that Uses ("computeMultiple", v2)
-num1, count
+num1, count, age, num2
 5000
 47 - identify variables that 'while' stmt 8 uses
 variable v;
@@ -236,7 +236,7 @@ num1, num2, count, num3
 48 -  identify variables who are modified by procedure updateNum and if there are variables modified by procedure computeMultiple
 variable v1, v2;
 Select v1 such that Modifies ("updateNum", v1) such that Modifies ("computeMultiple", v2)
-num1, num3 
+num1, num3, age 
 5000
 49 - identify variables that while stmt 8 modifies
 variable v;

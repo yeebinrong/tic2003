@@ -68,9 +68,11 @@ public:
 	// method to insert a Next into the database
 	static void insertNext(string stmtNo, string nextStmtNo, string direct);
 
-		// method to insert a Parent into the database
+	// method to insert a Parent into the database
 	static void insertParent(string stmtNo, string parentStmtNo, string direct, string isFirst);
 
+	// method to insert a Call into the database
+	static void insertCall(string sourceProc, string targetProc, string parentStmtNo, string stmtNo, string direct);
 
 	static void getQueryResults(vector<string>& results, string query);
 
