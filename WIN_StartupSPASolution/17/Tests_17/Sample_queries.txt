@@ -221,7 +221,7 @@ Select a such that pattern a (_, _"count+1"_)
 45 - identify statements who are child statement of a parent statement
 stmt s1, s2; 
 Select s2 such that Parent (s1, s2)
-5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 30, 31
+5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 30, 31
 5000
 46 -  identify variables who are used by procedure updateNum and if there are variables used by procedure computeMultiple
 variable v1, v2;
