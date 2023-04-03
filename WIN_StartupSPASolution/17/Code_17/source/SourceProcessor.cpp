@@ -34,7 +34,6 @@ void insertForIndirectUseMod(string currProc, string varName, map<string, vector
 		string sourceProc = sourceProcList[i].first;
 		int sourceCallStmtNo = sourceProcList[i].second;
 		if (mode == "use") {
-			cout << "insert uses:" << sourceCallStmtNo << ", varname:" << varName << endl;
 			Database::insertUses(to_string(sourceCallStmtNo), sourceProc, varName);
 		}
 		if (mode == "mod") {
@@ -136,6 +135,18 @@ void insertForAllCalls(string targetProc, int currProcCallNo, string currProc, m
 	}
 }
 
+////handles directNext that are related to container's special behaviours
+//void specialDirectNext(vector<pair<string, vector<int>>> containerEndList, vector<pair<string, int>> containerList) {
+//	cout << "calling special" << endl;
+//	if (containerList.back().first == "while") {
+//		for (int x : containerEndList.back().second) {
+//			cout << "special" << x << ":" << containerList.back().second << endl;
+//			Database::insertNext(to_string(x), to_string(containerList.back().second), "1"); //end of while points to while-header
+//		}
+//		//containerEndList.back().second.push_back(containerList.back().second);
+//	}
+//
+//}
 
 
 
@@ -157,6 +168,7 @@ void SourceProcessor::process(string program) {
 	// This logic is highly simplified based on iteration 1 requirements and 
 	// the assumption that the programs are valid.
 	string procedureName = tokens.at(1);
+	string prevProcedure = procedureName;
 	// insert the procedure into the database
 	Database::insertProcedure(procedureName);
 	//@@@ init @@@//
@@ -168,12 +180,15 @@ void SourceProcessor::process(string program) {
 	map<string, vector<pair<string, int>>> procContMap; //store procedure and vector of containers within procedure
 	map<string, vector<pair<string, int>>> procCallMap; //store procedure and vector of procs that calls this proc
 	vector<string> procedureList; 
+	vector<pair<string, vector<int>>> containerEndList; //store container and endStmtList pair
+	map<string,vector<int>> prevStmtNumList; //list of prevStmt to relate NEXT to stmtNum <procName,list>
 	procedureList.push_back(procedureName);
 	containerList.push_back({ "main", 1 });
 	whileList.push_back({ "main", 1 });
 	ifelseList.push_back({ "main", 1 });
 	procContMap.insert(pair<string, vector<pair<string, int>>>(procedureName, {}));
 	bool repeated = false;
+	bool whileSkip = false;
 	vector<string> containers;
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
@@ -182,15 +197,37 @@ void SourceProcessor::process(string program) {
 		if (containers.size() > 0 && currToken == "}") {
 			if (containers[containers.size() - 1] != "if") {
 				if (containers[containers.size() - 1] == "while") {
+					vector<int> temp = containerEndList.back().second;
+					if (find(temp.begin(), temp.end(), stmtNum) == temp.end()) {
+						cout << "first time "<<stmtNum << endl;
+						containerEndList.back().second.push_back(containerList.back().second);
+						containerEndList.back().second.push_back(stmtNum);
+						Database::insertNext(to_string(stmtNum), to_string(containerList.back().second),"1");
+						whileSkip = true;
+					}
+					else {
+						cout << "second time " << temp.back() << endl;
+						containerEndList.back().second.pop_back();
+						Database::insertNext(to_string(containerEndList.back().second.back()), to_string(containerList.back().second), "1");
+						prevStmtNumList[procedureName].push_back(containerList.back().second);
+					}
 					whileList.pop_back();
 				}
 				else {
+					containerEndList.back().second.push_back(stmtNum);
 					ifelseList.pop_back();
+					prevStmtNumList[procedureName] = containerEndList.back().second; //pass consolidated end points to list, this list will be used when stmtNum increments
+
 				}
 				containers.pop_back();
 				containerList.pop_back();
+				//call function that handles all specialDirectNext (ifelse/while)
 			}
 			else {
+				containerEndList.push_back({ containerList.back().first, {stmtNum} });//insert to endStmtList vector for current container
+				for (int i = 0; i < prevStmtNumList[procedureName].size(); i++) {
+					containerEndList.back().second.push_back(prevStmtNumList[procedureName].at(i));
+				}
 				containers[containers.size() - 1] = "ifelse";
 			}
 		}
@@ -198,11 +235,30 @@ void SourceProcessor::process(string program) {
 			!isValInVect({"}", "else", "procedure"}, currToken))
 		{
 			prevStmtNum = stmtNum;
-			stmtNum++;
+			if (tokens.at(i-2) == "else") {
+				prevStmtNum = containerList.back().second; //if-false (else) portion
+			}
+			stmtNum+=1;
 			Database::insertStmt(to_string(stmtNum));
 			insertForAllContainer(containerList, stmtNum);
 			insertForSpecificContainer(whileList, stmtNum, "while");
 			insertForSpecificContainer(ifelseList, stmtNum, "if");
+			if (prevStmtNum && (prevProcedure == procedureName) && !whileSkip ) { //add a flag to skip end of while
+				cout << "normal:" << prevStmtNum << ":" << stmtNum << endl;
+				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
+			}
+			else {
+				whileSkip = false;
+				prevProcedure = procedureName;
+			}
+			while (prevStmtNumList[procedureName].size()) {
+				prevStmtNum = prevStmtNumList[procedureName].back();
+				cout << "prevList:" << prevStmtNum << ":" << stmtNum << endl;
+				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
+				prevStmtNumList[procedureName].pop_back();
+			}
+
+			//insert logic to have insertNext for prevStmtNum list
 			//add logic here to handle sub-procedure parent* logic ************************
 			if (procContMap[procedureList.back()].size()) {
 				
@@ -305,6 +361,8 @@ void SourceProcessor::process(string program) {
 				Database::insertProcedure(currToken);
 				//procedureList.back() holds the current procedure that's being handled
 				procedureList.push_back(currToken);
+				prevProcedure = procedureName;
+				procedureName = currToken;
 				//empty containerList
 				containerList.clear();
 			}
@@ -316,6 +374,8 @@ void SourceProcessor::process(string program) {
 				repeated = true;
 				stmtNum = 0;
 				procedureList.push_back(tokens.at(1));
+				prevStmtNum = 0;
+				prevStmtNumList.clear();
 			}
 			else {
 				break;
