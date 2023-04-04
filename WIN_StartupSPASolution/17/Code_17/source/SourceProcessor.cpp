@@ -135,20 +135,36 @@ void insertForAllCalls(string targetProc, int currProcCallNo, string currProc, m
 	}
 }
 
-////handles directNext that are related to container's special behaviours
-//void specialDirectNext(vector<pair<string, vector<int>>> containerEndList, vector<pair<string, int>> containerList) {
-//	cout << "calling special" << endl;
-//	if (containerList.back().first == "while") {
-//		for (int x : containerEndList.back().second) {
-//			cout << "special" << x << ":" << containerList.back().second << endl;
-//			Database::insertNext(to_string(x), to_string(containerList.back().second), "1"); //end of while points to while-header
-//		}
-//		//containerEndList.back().second.push_back(containerList.back().second);
-//	}
-//
-//}
 
+void insertContIndirectNext(int stmtNum, vector<pair<string,int>> containers) {
+	int endPoint = containers.back().second;
+	int startPoint = stmtNum;
+	int iterateFor = 1;
+	//cout << "indirect next for container: " << containers.back().first << " at " << endPoint << endl;
+	
+	if (containers.back().first == "while") {
+		iterateFor = stmtNum - endPoint;
+	}
+	for (int x = startPoint; x > endPoint; x--) {
+		//startPoint -= 1;
+		for (int i = startPoint-1; i >= endPoint; i--) {
+			//cout << "inserting indirect:" << i << ":" << startPoint << endl;
+			Database::insertNext(to_string(i), to_string(startPoint), "0");
+		}
+	}
+}
 
+void insertIndirectNext(int start, int end) {
+	for (int i = start - 1; i >= end; i--) {
+		Database::insertNext(to_string(i), to_string(start),  "0");
+	}
+}
+
+void insertIfElseIndirectNext(int currStmtNum, vector<int> prevList) {
+	for (int i = prevList.size()-1; i >= 0 ; i--) {
+		Database::insertNext(to_string(prevList.at(i)), to_string(currStmtNum), "0");
+	}
+}
 
 
 
@@ -180,33 +196,36 @@ void SourceProcessor::process(string program) {
 	map<string, vector<pair<string, int>>> procContMap; //store procedure and vector of containers within procedure
 	map<string, vector<pair<string, int>>> procCallMap; //store procedure and vector of procs that calls this proc
 	vector<string> procedureList; 
-	vector<pair<string, vector<int>>> containerEndList; //store container and endStmtList pair
+	int procedureStart;
+	vector<pair<string, vector<int>>> containerEndList = { {"",{}} }; //store container and endStmtList pair
 	map<string,vector<int>> prevStmtNumList; //list of prevStmt to relate NEXT to stmtNum <procName,list>
+	vector<int> indPrevStmtNumList; //store stmts that have been executed before stmtNum (for indirectNEXT only)
 	procedureList.push_back(procedureName);
+	procedureStart = 1;
 	containerList.push_back({ "main", 1 });
 	whileList.push_back({ "main", 1 });
 	ifelseList.push_back({ "main", 1 });
 	procContMap.insert(pair<string, vector<pair<string, int>>>(procedureName, {}));
 	bool repeated = false;
 	bool whileSkip = false;
-	vector<string> containers;
+	vector<pair<string,int>> containers; //if, ifelse, while (+stmtNum)
 	// iterate subsequent statements for variable/constant
 	for (size_t i = 2; i < tokens.size(); i++) {
 		string prevToken = tokens.at(i - 1);
 		string currToken = tokens.at(i);
 		if (containers.size() > 0 && currToken == "}") {
-			if (containers[containers.size() - 1] != "if") {
-				if (containers[containers.size() - 1] == "while") {
+			if (containers[containers.size() - 1].first != "if") {
+				if (containers[containers.size() - 1].first == "while") {
 					vector<int> temp = containerEndList.back().second;
 					if (find(temp.begin(), temp.end(), stmtNum) == temp.end()) {
-						cout << "first time "<<stmtNum << endl;
+						//cout << "first time "<<stmtNum << endl;
 						containerEndList.back().second.push_back(containerList.back().second);
 						containerEndList.back().second.push_back(stmtNum);
 						Database::insertNext(to_string(stmtNum), to_string(containerList.back().second),"1");
 						whileSkip = true;
 					}
 					else {
-						cout << "second time " << temp.back() << endl;
+						//cout << "second time " << temp.back() << endl;
 						containerEndList.back().second.pop_back();
 						Database::insertNext(to_string(containerEndList.back().second.back()), to_string(containerList.back().second), "1");
 						prevStmtNumList[procedureName].push_back(containerList.back().second);
@@ -228,7 +247,7 @@ void SourceProcessor::process(string program) {
 				for (int i = 0; i < prevStmtNumList[procedureName].size(); i++) {
 					containerEndList.back().second.push_back(prevStmtNumList[procedureName].at(i));
 				}
-				containers[containers.size() - 1] = "ifelse";
+				containers[containers.size() - 1] = { "ifelse",stmtNum + 1};
 			}
 		}
 		if (isValInVect({"{", ";", "}"}, prevToken) &&
@@ -243,17 +262,34 @@ void SourceProcessor::process(string program) {
 			insertForAllContainer(containerList, stmtNum);
 			insertForSpecificContainer(whileList, stmtNum, "while");
 			insertForSpecificContainer(ifelseList, stmtNum, "if");
+
+			if (!containers.size()) {
+				insertIndirectNext(stmtNum, procedureStart);
+				indPrevStmtNumList.push_back(stmtNum);
+			}
+			else if (containers.back().first == "while") { //while
+				insertIfElseIndirectNext (stmtNum, indPrevStmtNumList);
+				insertContIndirectNext(stmtNum, containers);
+				indPrevStmtNumList.push_back(stmtNum);
+			}
+			else { //if + ifelse
+				insertIfElseIndirectNext(stmtNum,indPrevStmtNumList);
+				insertContIndirectNext(stmtNum, containers);
+			}
+
+			//handle general NEXT relation
 			if (prevStmtNum && (prevProcedure == procedureName) && !whileSkip ) { //add a flag to skip end of while
-				cout << "normal:" << prevStmtNum << ":" << stmtNum << endl;
+				//cout << "normal:" << prevStmtNum << ":" << stmtNum << endl;
 				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
 			}
 			else {
 				whileSkip = false;
 				prevProcedure = procedureName;
 			}
+			//handle end of if-else + while => NEXT relation 
 			while (prevStmtNumList[procedureName].size()) {
 				prevStmtNum = prevStmtNumList[procedureName].back();
-				cout << "prevList:" << prevStmtNum << ":" << stmtNum << endl;
+				//cout << "prevList:" << prevStmtNum << ":" << stmtNum << endl;
 				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
 				prevStmtNumList[procedureName].pop_back();
 			}
@@ -263,7 +299,7 @@ void SourceProcessor::process(string program) {
 			if (procContMap[procedureList.back()].size()) {
 				
 				vector<pair<string, int>> tempContainerList = procContMap[procedureList.back()];
-				insertParentForSubProc(tempContainerList, stmtNum);
+				insertParentForSubProc(tempContainerList, stmtNum+1);
 
 			}
 		}
@@ -287,7 +323,7 @@ void SourceProcessor::process(string program) {
 				ifelseList.push_back({ currToken, stmtNum });
 			}
 			insertForAllContainer(containerList, stmtNum);
-			containers.push_back(currToken);
+			containers.push_back({ currToken,stmtNum });
 			containerList.push_back({ currToken, stmtNum });
 			string isFirst = containers.size() == 1 ? "1" : "0";
 			Database::insertParent(to_string(stmtNum), to_string(stmtNum), "1", isFirst);
@@ -361,6 +397,7 @@ void SourceProcessor::process(string program) {
 				Database::insertProcedure(currToken);
 				//procedureList.back() holds the current procedure that's being handled
 				procedureList.push_back(currToken);
+				procedureStart = stmtNum + 1;
 				prevProcedure = procedureName;
 				procedureName = currToken;
 				//empty containerList
@@ -376,6 +413,7 @@ void SourceProcessor::process(string program) {
 				procedureList.push_back(tokens.at(1));
 				prevStmtNum = 0;
 				prevStmtNumList.clear();
+				indPrevStmtNumList.clear();
 			}
 			else {
 				break;
