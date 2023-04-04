@@ -56,7 +56,7 @@ void Database::initialize() {
 
 	// drop the existing next table (if any)
 	executeQuery("DROP TABLE IF EXISTS nexts");
-	executeQuery("CREATE TABLE nexts ( stmtNo VARCHAR(255), nextStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, nextStmtNo)); ");
+	executeQuery("CREATE TABLE nexts ( stmtNo VARCHAR(255), nextStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, nextStmtNo, direct)); ");
 
 	// drop the existing parent table (if any)
 	executeQuery("DROP TABLE IF EXISTS parents");
@@ -69,6 +69,10 @@ void Database::initialize() {
 	// drop/create the existing uses table (if any)
 	executeQuery("DROP TABLE IF EXISTS uses");
 	executeQuery("CREATE TABLE uses ( stmtNo VARCHAR(255), procedureName VARCHAR(255), target VARCHAR(255), PRIMARY KEY (stmtNo, procedureName, target))");
+
+	// drop/create the existing calls table (if any)
+	executeQuery("DROP TABLE IF EXISTS calls");
+	executeQuery("CREATE TABLE calls (sourceProc VARCHAR(255), targetProc VARCHAR(255), parentStmtNo VARCHAR(255), stmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0',  PRIMARY KEY (sourceProc, targetProc))");
 
 	// initialize the result vector
 	dbResults = vector<vector<string>>();
@@ -171,6 +175,13 @@ void Database::insertNext(string stmtNo, string nextStmtNo, string direct) {
 void Database::insertParent(string stmtNo, string parentStmtNo, string direct, string isFirst) {
 	Database::executeQuery(generateInsertQuery("parents", { "stmtNo", "parentStmtNo", "direct", "isFirst"}, {stmtNo, parentStmtNo, direct, isFirst}));
 }
+
+// method to insert a Call into the database
+void Database::insertCall(string sourceProc, string targetProc, string parentStmtNo, string stmtNo, string direct) {
+	Database::executeQuery(generateInsertQuery("calls", { "sourceProc", "targetProc", "parentStmtNo", "stmtNo", "direct" }, { sourceProc, targetProc, parentStmtNo, stmtNo, direct }));
+}
+
+
 
 
 void Database::executeQueryAndMapResults(vector<string>& results, string query) {
