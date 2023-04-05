@@ -191,8 +191,14 @@ void Database::executeQueryAndMapResults(vector<string>& results, string query) 
 	sqlite3_exec(dbConnection, query.c_str(), callback, 0, &errorMessage);
 	// postprocess the results from the database so that the output is just a vector of string
 	for (vector<string> dbRow : dbResults) {
-		string result;
-		result = dbRow.at(0);
+		string result = "";
+		for (int i = 0; i < dbRow.size(); i += 1) {
+			if (result != "") {
+				result += " ";
+			}
+			result += dbRow.at(i);
+
+		}
 		results.push_back(result);
 	}
 }
