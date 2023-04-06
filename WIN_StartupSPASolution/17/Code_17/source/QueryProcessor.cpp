@@ -224,7 +224,11 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 					clause = appendPatternClause(clause, targetTableAlias, "target", target);
 				}
 				else {
-					if (!isValInMap(declarationMap, source) && mainSynonymType == "procedure") {
+					if (
+						!isValInMap(declarationMap, source) &&
+						mainSynonymType == "procedure" &&
+						source != "'_'"
+					) {
 						clause = appendAnd(clause);
 						clause += targetTableAlias + ".procedureName = " + source;
 					}
@@ -233,7 +237,11 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 							clause = appendAnd(clause);
 							clause += targetTableAlias + ".stmtNo = " + source;
 						}
-						else if (source != "'_'" && !isValInMap(declarationMap, source)) {
+						else if (
+							!isValInMap(declarationMap, source) &&
+							mainSynonymType != "procedure" &&
+							source != "'_'"
+						) {
 							clause = appendAnd(clause);
 							clause += targetTableAlias + ".procedureName = " + source;
 						}
@@ -478,11 +486,11 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				}
 				isInCondition = true;
 				string source = tokens.at(i + offset);
-				if (isdigit(source[0])) {
+				if (isdigit(source[0]) || source[0] == '_') {
 					source = "'" + source + "'";
 				}
 				string target = tokens.at(i + offset + 2);
-				if (isdigit(target[0])) {
+				if (isdigit(target[0]) || target[0] == '_') {
 					target = "'" + target + "'";
 				}
 				// parent type always insert at front of typeToArgMap
