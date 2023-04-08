@@ -56,7 +56,7 @@ void Database::initialize() {
 
 	// drop the existing next table (if any)
 	executeQuery("DROP TABLE IF EXISTS nexts");
-	executeQuery("CREATE TABLE nexts ( stmtNo VARCHAR(255), nextStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, nextStmtNo, direct)); ");
+	executeQuery("CREATE TABLE nexts ( stmtNo VARCHAR(255), prevStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, prevStmtNo, direct)); ");
 
 	// drop the existing parent table (if any)
 	executeQuery("DROP TABLE IF EXISTS parents");
@@ -72,7 +72,7 @@ void Database::initialize() {
 
 	// drop/create the existing calls table (if any)
 	executeQuery("DROP TABLE IF EXISTS calls");
-	executeQuery("CREATE TABLE calls (sourceProc VARCHAR(255), targetProc VARCHAR(255), parentStmtNo VARCHAR(255), stmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0',  PRIMARY KEY (sourceProc, targetProc))");
+	executeQuery("CREATE TABLE calls (procedureName VARCHAR(255), targetProc VARCHAR(255), stmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0',  PRIMARY KEY (procedureName, targetProc))");
 
 	// initialize the result vector
 	dbResults = vector<vector<string>>();
@@ -168,7 +168,7 @@ void Database::insertUses(string stmtNo, string procedureName, string target) {
 
 // method to insert a Next into the database
 void Database::insertNext(string stmtNo, string nextStmtNo, string direct) {
-	Database::executeQuery(generateInsertQuery("nexts", { "stmtNo", "nextStmtNo", "direct" }, { stmtNo, nextStmtNo, direct }));
+	Database::executeQuery(generateInsertQuery("nexts", { "prevStmtNo", "stmtNo", "direct" }, { stmtNo, nextStmtNo, direct }));
 }
 
 // method to insert a Parent into the database
@@ -177,8 +177,8 @@ void Database::insertParent(string stmtNo, string parentStmtNo, string direct, s
 }
 
 // method to insert a Call into the database
-void Database::insertCall(string sourceProc, string targetProc, string parentStmtNo, string stmtNo, string direct) {
-	Database::executeQuery(generateInsertQuery("calls", { "sourceProc", "targetProc", "parentStmtNo", "stmtNo", "direct" }, { sourceProc, targetProc, parentStmtNo, stmtNo, direct }));
+void Database::insertCall(string sourceProc, string targetProc, string stmtNo, string direct) {
+	Database::executeQuery(generateInsertQuery("calls", { "procedureName", "targetProc", "stmtNo", "direct" }, { sourceProc, targetProc, stmtNo, direct }));
 }
 
 
