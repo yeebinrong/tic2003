@@ -169,6 +169,30 @@ string appendPatternClause(string clause, string tableName, string column, strin
 	return clause;
 }
 
+string getSubColumnClause(vector<string> mainSynonymVars, map<string, string> declarationMap) {
+	string columnClause = "";
+	for (int i = 0; i < mainSynonymVars.size(); i += 1) {
+		string mainSynonymType = declarationMap[mainSynonymVars[i]];
+		string tableName = "TABLE_" + mainSynonymVars[i];
+		columnClause = appendComma(columnClause);
+		columnClause += tableName;
+		if (mainSynonymType == "procedure") {
+			columnClause += ".procedureName";
+		}
+		else if (mainSynonymType == "variable") {
+			columnClause += ".name";
+		}
+		else if (mainSynonymType == "constant") {
+			columnClause += ".value";
+		}
+		else if (isValInVectTwo({ "assign", "print", "read", "stmt", "while", "if_table", "calls" }, mainSynonymType)) {
+			columnClause += ".stmtNo";
+		}
+		columnClause += " AS " + mainSynonymVars[i];
+	}
+	return columnClause;
+}
+
 string appendMainClause(string clause, vector<string> mainSynonymVars, map<string, string> declarationMap) {
 	string columnClause = "";
 	string fromClause = "";
@@ -361,8 +385,13 @@ string checkExactOrPartialMatch(int offset, vector<string> tokens) {
 string appendJoinOnClause(string joinClause, vector<string> mainSynonymTypes, string source, string target, string patternRef, string targetTable, string targetTableAlias, string sourceTable, string sourceTableAlias, string mainSource, string mainTarget, map<string, string> declarationMap) {
 	joinClause += " INNER JOIN " + targetTable + " AS " + targetTableAlias;
 	string tempJoinClause = "";
+	vector<string> joinedTables;
 	for (int i = 0; i < mainSynonymTypes.size(); i += 1) {
 		string mainSynonymType = mainSynonymTypes[i];
+		if (isValInVectTwo(joinedTables, mainSynonymType)) {
+			continue;
+		}
+		joinedTables.push_back(mainSynonymType);
 		if (sourceTable == "nexts" && targetTable == "nexts") {
 			tempJoinClause += sourceTableAlias + ".prevStmtNo = " + targetTableAlias + ".prevStmtNo";
 
@@ -455,27 +484,30 @@ string appendEndOfNestedJoin(string joinClause, vector<string> mainSynonymTypes,
 		string tableAlias = tableName + "_" + mainSynonymVars[i];
 		tempJoinClause += tableAlias;
 		if (tableName == "variable") {
-			tempJoinClause += ".name = MAIN_REF_TABLE";
-			if (isValInVectTwo({ "modifies", "uses" }, formatTableName(typeToArgList[mainRefIndex[0]].first))) {
-				tempJoinClause += ".target";
-			}
-			else {
-				tempJoinClause += ".source";
-			}
+			tempJoinClause += ".name = MAIN_REF_TABLE." + mainSynonymVars[i];
+			//tempJoinClause += ".name = MAIN_REF_TABLE";
+			//if (isValInVectTwo({ "modifies", "uses" }, formatTableName(typeToArgList[mainRefIndex[0]].first))) {
+			//	tempJoinClause += ".target";
+			//}
+			//else {
+			//	tempJoinClause += ".source";
+			//}
 		}
 		else if (tableName == "procedure") {
-			tempJoinClause += ".procedureName = MAIN_REF_TABLE.procedureName";
+			tempJoinClause += ".procedureName = MAIN_REF_TABLE." + mainSynonymVars[i];
+			//tempJoinClause += ".procedureName = MAIN_REF_TABLE.procedureName";
 		}
 		else {
-			string joinColumn = ".stmtNo";
-			if (
-				isValInMap(declarationMap, mainSource) &&
-				formatTableName(typeToArgList[mainRefIndex[0]].first) == "parents" &&
-				mainSource == mainSynonymVars[i]
-			) {
-				joinColumn = ".parentStmtNo";
-			}
-			tempJoinClause += ".stmtNo = MAIN_REF_TABLE" + joinColumn;
+			//string joinColumn = ".stmtNo";
+			//if (
+			//	isValInMap(declarationMap, mainSource) &&
+			//	formatTableName(typeToArgList[mainRefIndex[0]].first) == "parents" &&
+			//	mainSource == mainSynonymVars[i]
+			//) {
+			//	joinColumn = ".parentStmtNo";
+			//}
+			//tempJoinClause += ".stmtNo = MAIN_REF_TABLE" + joinColumn;
+			tempJoinClause += ".stmtNo = MAIN_REF_TABLE." + mainSynonymVars[i];
 		}
 	}
 	if (tempJoinClause != "") {
@@ -678,9 +710,9 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		string targetTable = formatTableName(typeToArgList[mainRefIndex[0]].first);
 		string unformattedTargetTable = typeToArgList[mainRefIndex[0]].first;
 		string source = typeToArgList[mainRefIndex[0]].second[0];
-		string sourceTableAlias = isValInMap(declarationMap, source) ? declarationMap[source] : "";
+		string sourceTableAlias = isValInMap(declarationMap, source) ? "TABLE_" + declarationMap[source] : "";
 		string target = typeToArgList[mainRefIndex[0]].second[1];
-		string targetTableAlias = isValInMap(declarationMap, target) ? declarationMap[target] : "";
+		string targetTableAlias = isValInMap(declarationMap, target) ? "TABLE_" + declarationMap[target] : "";
 		string patternRef = "";
 		// patternRef refers to the var for assign used for the pattern
 		// In the example below, a is the patternRef
@@ -758,11 +790,12 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				patternRef = typeToArgList[mainRefIndex[i]].second[2];
 			}
 			string targetTableAlias = "t_" + to_string(i + 1); // the alias for table belonging the clause
-			string refSourceAlias = source; //"t_source_" + to_string(i + 1); // the alias for table belonging to LHS of the clause
-			string refTargetAlias = target; //"t_target_" + to_string(i + 1); // the alias for table belonging to RHS of the clause
+			string refSourceAlias = "TABLE_" + source; // the alias for table belonging to LHS of the clause
+			string refTargetAlias = "TABLE_" + target; // the alias for table belonging to RHS of the clause
 			if (i == 0) {
 				// append nested join if is the first loop
-				joinClause += " INNER JOIN (SELECT * FROM " + mainTable + " AS " + mainTableAlias;
+				joinClause += " INNER JOIN (SELECT " + getSubColumnClause(mainSynonymVars, declarationMap);
+				joinClause += " FROM " + mainTable + " AS " + mainTableAlias;
 			}
 			else {
 				// else append inner join clause
@@ -810,12 +843,19 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			);
 			if (
 				isValInMap(declarationMap, source) &&
-				isValInVectTwo({ "while", "if_table" }, declarationMap[target]) &&
 				isValInMap(declarationMap, target) &&
-				isValInVectTwo({ "while", "if_table" }, declarationMap[source])
+				(
+					(
+						isValInVectTwo({ "while", "if_table" }, declarationMap[source]) &&
+						isValInVectTwo({ "while", "if_table" }, declarationMap[target])
+					) ||
+					declarationMap[source] == "calls" && declarationMap[target] == "calls"
+				)
+
 			) {
+				string columnName = declarationMap[source] != "calls" ? ".parentStmtNo" : ".prevStmtNo";
 				refWhereClause = appendAnd(refWhereClause);
-				refWhereClause += "CAST(" + source + ".parentStmtNo as INT) < CAST(" + target + ".parentStmtNo as INT)";
+				refWhereClause += "CAST(" + source + columnName + " as INT) < CAST(" + target + columnName + " as INT)";
 			}
 			refWhereClause = checkAndAddDirect(refWhereClause, targetTableAlias, i, mainRefIndex, typeToArgList, declarationMap);
 		}
