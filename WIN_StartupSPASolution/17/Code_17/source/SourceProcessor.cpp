@@ -147,7 +147,8 @@ vector<vector<int>> insertIPSNL(vector<vector<int>> indPrevStmtNumList, int stmt
 
 
 
-void insertContIndirectNext(int stmtNum, vector<pair<string,int>> containers) {
+void insertContIndirectNext(int stmtNum, vector<pair<string,int>> containers, int procedureStart) {
+	int largestContHead = 0;
 	while (containers.size()) { //iterate to the largest container
 		int endPoint = containers.back().second;
 		int startPoint = stmtNum + 1;
@@ -155,7 +156,7 @@ void insertContIndirectNext(int stmtNum, vector<pair<string,int>> containers) {
 		if (containers.back().first == "while") {
 			iterateFor = stmtNum - endPoint;
 		}
-		for (int x = 0; x < iterateFor; x++) {
+		for (int x = 0; x <= iterateFor; x++) {
 			startPoint -= 1;
 			for (int i = stmtNum; i >= endPoint; i--) {
 				Database::insertNext(to_string(i), to_string(startPoint), "0");
@@ -164,12 +165,17 @@ void insertContIndirectNext(int stmtNum, vector<pair<string,int>> containers) {
 		if (containers.back().first == "ifelse") {
 			containers.pop_back(); 
 		}
+		largestContHead = containers.back().second;
 		containers.pop_back();
+	}
+	for (int i = (largestContHead - 1) ; i >= procedureStart; i--) {
+		Database::insertNext(to_string(i), to_string(stmtNum), "0");
 	}
 }
 
 void insertIndirectNext(int start, int end) {
-	for (int i = start; i >= end; i--) {
+	for (int i = start-1; i >= end; i--) {
+		//cout << i << " : " << start << endl;
 		Database::insertNext(to_string(i), to_string(start),  "0");
 	}
 }
@@ -178,6 +184,13 @@ void insertIfElseIndirectNext(int currStmtNum, vector<int> prevList) {
 	for (int i = prevList.size()-1; i > 0 ; i--) {
 		Database::insertNext(to_string(prevList.at(i)), to_string(currStmtNum), "0");
 	}
+}
+
+vector<vector<int>> checkPopBack(vector<vector<int>> indPrevStmtNumList) {
+	if (indPrevStmtNumList.size()) {
+		indPrevStmtNumList.pop_back();
+	}
+	return indPrevStmtNumList;
 }
 
 
@@ -242,13 +255,13 @@ void SourceProcessor::process(string program) {
 						Database::insertNext(to_string(containerEndList.back().second.back()), to_string(containerList.back().second), "1");
 						prevStmtNumList[procedureName].push_back(containerList.back().second);
 					}
-					indPrevStmtNumList.pop_back();
+					indPrevStmtNumList = checkPopBack(indPrevStmtNumList);
 					whileList.pop_back();
 				}
 				else { //ifelse
 					containerEndList.back().second.push_back(stmtNum);
 					prevStmtNumList[procedureName] = containerEndList.back().second; //pass consolidated end points to list, this list will be used when stmtNum increments
-					indPrevStmtNumList.pop_back(); //erase temp list used for ifelse
+					indPrevStmtNumList = checkPopBack(indPrevStmtNumList);//erase temp list used for ifelse
 					//merge refList + ifStmts with ifelseStmts
 					for (int i = ifelseList.back().second; i <= stmtNum; i++) {
 						indPrevStmtNumList = insertIPSNL(indPrevStmtNumList, i);
@@ -268,10 +281,11 @@ void SourceProcessor::process(string program) {
 				indPrevStmtNumList.push_back(indPrevStmtNumList.back()); //store list instance, move forward, next cell used for temp list (if)
 				insertIfElseIndirectNext(stmtNum, indPrevStmtNumList.back());//insert indirect next
 				vector<int> temp = indPrevStmtNumList.back(); //store reflist+ifStmts
-				indPrevStmtNumList.pop_back(); //erase temp list used for if
-				indPrevStmtNumList.push_back(indPrevStmtNumList.back()); //copy refList forward,  next cell used for temp list (ifelse)
-				indPrevStmtNumList.at(indPrevStmtNumList.size() - 2) = temp; //replace refList with refList+ifStmts
-
+				indPrevStmtNumList = checkPopBack(indPrevStmtNumList); //erase temp list used for if
+				if (indPrevStmtNumList.size()) {
+					indPrevStmtNumList.push_back(indPrevStmtNumList.back()); //copy refList forward,  next cell used for temp list (ifelse)
+					indPrevStmtNumList.at(indPrevStmtNumList.size() - 2) = temp; //replace refList with refList+ifStmts
+				}
 			}
 		}
 		//STMT NUM INCREMENT//
@@ -294,14 +308,14 @@ void SourceProcessor::process(string program) {
 				indPrevStmtNumList = insertIPSNL(indPrevStmtNumList, stmtNum);
 			}
 			else if (containers.back().first == "while") { //while
-				insertContIndirectNext(stmtNum, containers);
+				insertContIndirectNext(stmtNum, containers, procedureStart);
 				indPrevStmtNumList = insertIPSNL(indPrevStmtNumList, stmtNum);
 			}
 			else { //if + ifelse
 				if (indPrevStmtNumList.size()) {
 					insertIfElseIndirectNext(stmtNum, indPrevStmtNumList.back());//insert indirect next
 				}
-				insertContIndirectNext(stmtNum, containers);
+				insertContIndirectNext(stmtNum, containers, procedureStart);
 				indPrevStmtNumList = insertIPSNL(indPrevStmtNumList, stmtNum);
 			}
 
