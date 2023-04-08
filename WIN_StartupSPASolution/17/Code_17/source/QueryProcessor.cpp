@@ -300,7 +300,15 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 				else if (
 					isValInMap(declarationMap, target) &&
 					targetTable == "parents" &&
-					isValInVectTwo({ "while", "if_table" }, declarationMap[target])
+					(
+						isValInVectTwo({ "while", "if_table" }, declarationMap[target]) ||
+						(
+							isValInMap(declarationMap, source) &&
+							isValInVectTwo({ "while", "if_table" }, declarationMap[source]) &&
+							mainSynonymType == "stmt" &&
+							declarationMap[target] == "stmt"
+						)
+					)
 				) {
 					clause = appendAnd(clause);
 					clause += targetTableAlias + ".isFirst = '0'";
@@ -355,8 +363,6 @@ string appendJoinOnClause(string joinClause, vector<string> mainSynonymTypes, st
 	string tempJoinClause = "";
 	for (int i = 0; i < mainSynonymTypes.size(); i += 1) {
 		string mainSynonymType = mainSynonymTypes[i];
-		cout << "target: " << targetTable << endl;
-		cout << "source: " << sourceTable << endl;
 		if (sourceTable == "nexts" && targetTable == "nexts") {
 			tempJoinClause += sourceTableAlias + ".prevStmtNo = " + targetTableAlias + ".prevStmtNo";
 
