@@ -399,7 +399,13 @@ void SourceProcessor::process(string program) {
 				vector<pair<string, int>> mergedContainerList = containerList;
 				mergedContainerList.insert(mergedContainerList.end(), procContMap[procedureList.back()].begin(), procContMap[procedureList.back()].end());
 				if (procContMap.find(currToken) == procContMap.end()) {
-					mergedContainerList.erase(mergedContainerList.begin());
+					if (mergedContainerList.size() > 1) {
+						mergedContainerList.erase(mergedContainerList.begin());
+					}
+					else {
+						mergedContainerList.clear();
+					}
+
 					procContMap.insert(pair<string, vector<pair<string, int>>>(currToken, mergedContainerList));
 				}
 				else {
