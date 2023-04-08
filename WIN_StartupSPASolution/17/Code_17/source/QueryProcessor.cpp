@@ -33,6 +33,10 @@ bool checkIfIsDigitForClause(string source) {
 	return false;
 }
 
+string removeQuotesFromInt(string source) {
+	return source.substr(1, source.size() - 2);
+}
+
 string toLowerCase(string val) {
 	//Apply tolower to each character of string
 	std::transform(val.begin(), val.end(), val.begin(),
@@ -82,7 +86,7 @@ bool isExactMatch(string str) {
 }
 
 bool isDirect(string targetTable) {
-	if (isValInVectTwo({ "next*","parent*" }, targetTable)) {
+	if (isValInVectTwo({ "next*", "parent*", "calls*" }, targetTable)) {
 		return false;
 	}
 	return true;
@@ -131,7 +135,7 @@ string checkAndReplaceLike(string str) {
 
 string checkAndAddDirect(string whereClause, string targetTableAlias, int i, vector<int> mainRefIndex, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap) {
 	if (
-		typeToArgList[mainRefIndex[i]].first == "Parent" &&
+		isValInVectTwo({ "parent", "calls", "next" }, typeToArgList[mainRefIndex[i]].first) &&
 		(
 			typeToArgList[mainRefIndex[i]].second[0] != "'_'" &&
 			!isValInMap(declarationMap, typeToArgList[mainRefIndex[i]].second[0])
@@ -184,7 +188,7 @@ string appendMainClause(string clause, vector<string> mainSynonymVars, map<strin
 		else if (mainSynonymType == "constant") {
 			columnClause += ".value";
 		}
-		else if (isValInVectTwo({ "assign", "print", "read", "stmt", "while", "if_table" }, mainSynonymType)) {
+		else if (isValInVectTwo({ "assign", "print", "read", "stmt", "while", "if_table", "calls" }, mainSynonymType)) {
 			columnClause += ".stmtNo";
 		}
 	}
@@ -205,14 +209,17 @@ string formatTableName(string tableName) {
 	else if (tableName == "next" || tableName == "next*") {
 		return "nexts";
 	}
+	else if (tableName == "call" || tableName == "calls" || tableName == "calls*") {
+		return "calls";
+	}
 	return tableName;
 }
 
 string appendWhereClause(string clause, string targetTable, string targetTableAlias, vector<string> mainSynonymTypes, string source, string target, map<string, string> declarationMap, bool direct) {
 	for (int i = 0; i < mainSynonymTypes.size(); i += 1) {
 		string mainSynonymType = mainSynonymTypes[i];
-		if (isValInVectTwo({ "constant", "stmt", "read", "print", "assign", "while", "if_table", "variable", "procedure" }, mainSynonymType)) {
-			if (checkIfIsDigitForClause(source) && targetTable != "parents") {
+		if (isValInVectTwo({ "constant", "stmt", "read", "print", "assign", "while", "if_table", "variable", "procedure", "calls" }, mainSynonymType)) {
+			if (checkIfIsDigitForClause(source) && !isValInVectTwo({ "parents", "nexts" }, targetTable)) {
 				clause = appendAnd(clause);
 				clause += targetTableAlias + ".stmtNo = " + source;
 			}
@@ -232,7 +239,7 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 						clause = appendAnd(clause);
 						clause += targetTableAlias + ".procedureName = " + source;
 					}
-					if (isValInVectTwo({ "uses", "modifies" }, targetTable)) {
+					if (isValInVectTwo({ "uses", "modifies", "calls"}, targetTable)) {
 						if (source.size() > 2 && checkIfIsDigitForClause(source)) {
 							clause = appendAnd(clause);
 							clause += targetTableAlias + ".stmtNo = " + source;
@@ -246,31 +253,55 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 							clause += targetTableAlias + ".procedureName = " + source;
 						}
 						if (!isValInMap(declarationMap, target) && target != "'_'") {
+							string targetColumn = targetTable == "calls" ? ".targetProc" : ".target";
 							clause = appendAnd(clause);
-							clause += targetTableAlias + ".target = " + target;
+							clause += targetTableAlias + targetColumn + " = " + target;
 						}
 					}
 				}
 			}
-			if (targetTable == "parents") {
+			if (isValInVectTwo({ "parents", "nexts" }, targetTable)) {
 				if (checkIfIsDigitForClause(source) || (isValInMap(declarationMap, source) && declarationMap[source] == "stmt")) {
 					if (checkIfIsDigitForClause(source)) {
 						clause = appendAnd(clause);
-						clause += targetTableAlias + ".parentStmtNo = " + source;
+						string sourceColumnWithAlias = targetTableAlias + ".parentStmtNo";
+						string op = " = ";
+						if (targetTable == "nexts") {
+							sourceColumnWithAlias = targetTableAlias + ".prevStmtNo";
+							if (!direct) {
+								op = " > ";
+								sourceColumnWithAlias = "CAST(" + targetTableAlias + ".prevStmtNo" + " AS INT)";
+								source = removeQuotesFromInt(source);
+							}
+						}
+						clause += sourceColumnWithAlias + op + source;
 					}
-					clause = appendAnd(clause);
-					clause += targetTableAlias + ".stmtNo != " + targetTableAlias + ".parentStmtNo";
+					if (targetTable == "parents") {
+						clause = appendAnd(clause);
+						clause += targetTableAlias + ".stmtNo != " + targetTableAlias + ".parentStmtNo";
+					}
 				}
 				if (checkIfIsDigitForClause(target)) {
 					clause = appendAnd(clause);
-					clause += targetTableAlias + ".stmtNo = " + target;
+					string op = " = ";
+					string targetColumnWithAlias = targetTableAlias + ".stmtNo";
+					if (targetTable == "nexts" && !direct) {
+						op = " < ";
+						targetColumnWithAlias = "CAST(" + targetTableAlias + ".stmtNo" + " AS INT)";
+						target = removeQuotesFromInt(target);
+					}
+					clause += targetColumnWithAlias + op + target;
 				}
 
 				if (direct) {
 					clause = appendAnd(clause);
 					clause += targetTableAlias + ".direct = '1'";
 				}
-				else if (isValInMap(declarationMap, target) && isValInVectTwo({ "while", "if_table" }, declarationMap[target])) {
+				else if (
+					isValInMap(declarationMap, target) &&
+					targetTable == "parents" &&
+					isValInVectTwo({ "while", "if_table" }, declarationMap[target])
+				) {
 					clause = appendAnd(clause);
 					clause += targetTableAlias + ".isFirst = '0'";
 				}
@@ -324,18 +355,28 @@ string appendJoinOnClause(string joinClause, vector<string> mainSynonymTypes, st
 	string tempJoinClause = "";
 	for (int i = 0; i < mainSynonymTypes.size(); i += 1) {
 		string mainSynonymType = mainSynonymTypes[i];
-		if (targetTable == "procedure" || sourceTable == "procedure") {
+		cout << "target: " << targetTable << endl;
+		cout << "source: " << sourceTable << endl;
+		if (sourceTable == "nexts" && targetTable == "nexts") {
+			tempJoinClause += sourceTableAlias + ".prevStmtNo = " + targetTableAlias + ".prevStmtNo";
+
+		}
+		else if (targetTable == "procedure" || sourceTable == "procedure") {
 			tempJoinClause = appendAnd(tempJoinClause);
-			tempJoinClause += sourceTableAlias + ".procedureName = " + targetTableAlias + ".procedureName";
+			string joinColumn = ".procedureName";
+			if (targetTable == "calls" && isValInMap(declarationMap, target)) {
+				joinColumn = ".targetProc";
+			}
+			tempJoinClause += sourceTableAlias + ".procedureName = " + targetTableAlias + joinColumn;
 		}
 		else if (
-			isValInVectTwo({ "read", "print", "assign", "stmt", "while", "if_table", "constant", "parents" }, sourceTable)
+			isValInVectTwo({ "read", "print", "assign", "stmt", "while", "if_table", "constant", "parents", "nexts", "calls" }, sourceTable)
 		) {
 			string sourceColumn = ".stmtNo";
 			string joinColumn = ".stmtNo";
-			if (sourceTable == "parents" && (isValInMap(declarationMap, target) && !isValInVectTwo({ "while", "if_table" }, declarationMap[target]))) {
+			if (isValInVectTwo({ "parents", "nexts" }, sourceTable) && (isValInMap(declarationMap, target) && !isValInVectTwo({"while", "if_table"}, declarationMap[target]))) {
 				if (isValInMap(declarationMap, target) && isValInVectTwo({ "stmt" }, declarationMap[target])) {
-					sourceColumn = ".parentStmtNo";
+					sourceColumn = sourceTable == "parents" ? ".parentStmtNo" : ".prevStmtNo";
 				}
 				if (
 					isValInMap(declarationMap, target) &&
@@ -478,13 +519,13 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		}
 		else if (isEndOfDeclaration) {
 			// Start parsing queries
-			if (toLowerCase(currToken) == "parent") {
+			if (isValInVectTwo({ "parent", "next" }, toLowerCase(currToken))) {
+				isInCondition = true;
 				int offset = 2;
 				if (tokens.at(i + 1) == "*") {
 					offset = 3;
 					currToken += "*";
 				}
-				isInCondition = true;
 				string source = tokens.at(i + offset);
 				if (isdigit(source[0]) || source[0] == '_') {
 					source = "'" + source + "'";
@@ -496,18 +537,13 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				// parent type always insert at front of typeToArgMap
 				typeToArgList.insert(typeToArgList.begin(), { toLowerCase(currToken), { source, target } });
 			}
-			else if (toLowerCase(currToken) == "next") {
-				isInCondition = true;
-				string source = tokens.at(i + 2);
-				string target = tokens.at(i + 4);
-				typeToArgList.push_back({ toLowerCase(currToken), { source, target } });
-			}
-			else if (toLowerCase(currToken) == "next*") {
-				isInCondition = true;
-			}
-			else if (isValInVectTwo({ "uses", "modifies" }, toLowerCase(currToken))) {
+			else if (isValInVectTwo({ "uses", "modifies", "calls"}, toLowerCase(currToken))) {
 				isInCondition = true;
 				int offset = 2;
+				if (tokens.at(i + 1) == "*") {
+					offset = 3;
+					currToken += "*";
+				}
 				string source = tokens.at(i + offset);
 				if (source == "\"") {
 					offset += 1;

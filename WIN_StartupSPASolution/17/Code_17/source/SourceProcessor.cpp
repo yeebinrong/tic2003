@@ -124,11 +124,11 @@ void insertForAllCalls(string targetProc, int currProcCallNo, string currProc, m
 		int sourceCallStmtNo = sourceProcList[i].second;
 		if (targetProc == currProc) {
 			//occurs only for the 1st call of function
-			Database::insertCall(sourceProc, targetProc, to_string(sourceCallStmtNo), to_string(sourceCallStmtNo), "1");
+			Database::insertCall(sourceProc, targetProc, to_string(sourceCallStmtNo), "1");
 		}
 		else {
 			//occurs for remaining recursive calls
-			Database::insertCall(sourceProc, targetProc, to_string(sourceCallStmtNo), to_string(currProcCallNo), "0");
+			Database::insertCall(sourceProc, targetProc, to_string(sourceCallStmtNo), "0");
 		}
 		//recursively call function to insert indirect call  for procedures that calls sourceProc
 		insertForAllCalls(targetProc, sourceCallStmtNo, sourceProc, procCallMap);

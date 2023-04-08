@@ -72,7 +72,7 @@ public:
 	static void insertParent(string stmtNo, string parentStmtNo, string direct, string isFirst);
 
 	// method to insert a Call into the database
-	static void insertCall(string sourceProc, string targetProc, string parentStmtNo, string stmtNo, string direct);
+	static void insertCall(string sourceProc, string targetProc, string stmtNo, string direct);
 
 	static void getQueryResults(vector<string>& results, string query);
 
