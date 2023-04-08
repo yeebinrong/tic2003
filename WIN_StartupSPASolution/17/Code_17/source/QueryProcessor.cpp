@@ -300,7 +300,15 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 				else if (
 					isValInMap(declarationMap, target) &&
 					targetTable == "parents" &&
-					isValInVectTwo({ "while", "if_table" }, declarationMap[target])
+					(
+						isValInVectTwo({ "while", "if_table" }, declarationMap[target]) ||
+						(
+							isValInMap(declarationMap, source) &&
+							isValInVectTwo({ "while", "if_table" }, declarationMap[source]) &&
+							mainSynonymType == "stmt" &&
+							declarationMap[target] == "stmt"
+						)
+					)
 				) {
 					clause = appendAnd(clause);
 					clause += targetTableAlias + ".isFirst = '0'";
