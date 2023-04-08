@@ -355,8 +355,6 @@ string appendJoinOnClause(string joinClause, vector<string> mainSynonymTypes, st
 	string tempJoinClause = "";
 	for (int i = 0; i < mainSynonymTypes.size(); i += 1) {
 		string mainSynonymType = mainSynonymTypes[i];
-		cout << "target: " << targetTable << endl;
-		cout << "source: " << sourceTable << endl;
 		if (sourceTable == "nexts" && targetTable == "nexts") {
 			tempJoinClause += sourceTableAlias + ".prevStmtNo = " + targetTableAlias + ".prevStmtNo";
 

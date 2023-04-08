@@ -175,7 +175,6 @@ void insertContIndirectNext(int stmtNum, vector<pair<string,int>> containers, in
 
 void insertIndirectNext(int start, int end) {
 	for (int i = start-1; i >= end; i--) {
-		//cout << i << " : " << start << endl;
 		Database::insertNext(to_string(i), to_string(start),  "0");
 	}
 }
