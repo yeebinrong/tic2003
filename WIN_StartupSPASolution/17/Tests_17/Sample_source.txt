@@ -22,7 +22,7 @@ procedure NestedWhileIf {
         }
     }
 
-    add = a * b * c;
+    add = a * b * c;                
     print add;
     if (add < 0) then {
         print negative;
