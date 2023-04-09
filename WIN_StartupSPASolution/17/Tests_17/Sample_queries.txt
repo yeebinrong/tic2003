@@ -1,120 +1,240 @@
-2 - CallCase2
-procedure p; 
-Select p such that Calls* (p, "input")
-main, findGCFLCM
-5000
-3 - CallCase3
-procedure p; 
-Select p such that Calls* ("main", p)
-findGCFLCM, output, input
-5000
-4 - CallCase4
-procedure p, q; 
-Select p such that Calls (p, _)
-main, findGCFLCM
-5000
-5 - CallCase5
-procedure p1, p2, p3; 
-Select <p1, p2, p3> such that Calls* (p1, p2) such that Calls* (p2, p3)
-main findGCFLCM input
-5000
-6 - NextCase1 
-assign a; while w;
-Select <w, a> such that Next (w, a)
-15 16, 15 19
-5000
-7 - NextCase2
-assign a; while w;
-Select <w, a> such that Next* (w, a) pattern a(_,_"x"_)
-15 17, 15 19
-5000
-8 - NextCase3
+1001 - stmt entity no clause
 stmt s;
-Select s such that Next* (17, s) such that Next* (s, 20)
-15, 16, 17, 18, 19
+Select s
+1,10,11,12,13,14,15,16,17,18,19,2,3,4,5,6,7,8,9
 5000
-9 - NextCase4
-stmt s; while w;
-Select s such that Next* (s, w) such that Uses (s, "y")
-15, 16, 17
+1002 - read entity no clause
+read r;
+Select r
+1
 5000
-10 - UsesPCase1
-stmt s; 
-Select s such that Uses (s, "num1")
-1, 2, 5, 10, 20
+1003 - print entity no clause
+print pr;
+Select pr
+13,16,18,19,3
 5000
-11 - UsesPCase2
-procedure p; 
-Select p such that Uses (p, "LCM")
-main, output
+1004 - while entity no clause
+while w;
+Select w
+12,4,6
 5000
-12 - UsesPCase3
+1005 - if entity no clause
+if ifs;
+Select ifs
+17,8,9
+5000
+1006 - assign entity no clause
+assign a;
+Select a
+10,11,14,15,2,5,7
+5000
+1007 - variable entity no clause
 variable v;
-Select v such that Uses ("output", v)
-num1, num2, GCF, LCM
+Select v
+a,add,b,c,d,negative,positive
 5000
-13 - ModifiesPCase1 
+1008 - constant entity no clause
+constant c;
+Select c
+0,10,20,30
+5000
+1009 - procedure entity no clause
 procedure p;
-Select p such that Modifies (p, "num1")
-main, findGCFLCM, input
+Select p
+NestedWhileIf
 5000
-14 - ModifiesPCase2
+1030 - Parent 2 wildcards
+read r;
+Select r such that Parent(_, _)
+1
+5000
+1031 - Parent left wildcard with stmtNo
+while w;
+Select w such that Parent(_, 19)
+12,4,6
+5000
+1032 - Parent right wildcard with stmtNo
+if ifs;
+Select ifs such that Parent(12, _)
+17,8,9
+5000
+1033 - Parent left wildcard with syn
+assign a;
+Select a such that Parent(_, a)
+10,11,14,5,7
+5000
+1034 - Parent right wildcard with syn
+stmt s;
+Select s such that Parent(s, _)
+12,17,4,6,8,9
+5000
+1035 - Parent both stmtNo
+constant c;
+Select c such that Parent(4, 7)
+none
+5000
+1036 - Parent both syns, select from left
+if ifs; while w;
+Select ifs such that Parent(ifs, w)
+8
+5000
+1037 - Parent both syns, select from right
+while w; print pr;
+Select pr such that Parent(w, pr)
+13
+5000
+1038 - Parent mix, stmtNo syn
+stmt s;
+Select s such that Parent(4, s)
+5,6,8
+5000
+1039 - Parent mix, syn stmtNo
+while w;
+Select w such that Parent(w, 14)
+none
+5000
+1040 - Parent* 2 wildcards
 variable v;
-Select v such that Modifies (9, v)
-num1, num2
+Select v such that Parent*(_, _)
+a,add,b,c,d,negative,positive
 5000
-15 - ModifiesPCase3
-procedure p;
-Select p such that Modifies (p, _) such that Parent*(_,_)
-main, findGCFLCM, input
+1041 - Parent* left wildcard with stmtNo
+print pr;
+Select pr such that Parent*(_, 14)
+13,16,18,19,3
 5000
-16 - tupleCase1
-assign a1, a2;
-Select <a1, a2> such that Next* (a1, a2) pattern a1 ("x",_) pattern a2 (_, _"x"_)
-10 17, 10 19, 18 17, 18 19
+1042 - Parent* right wildcard with stmtNo
+read r;
+Select r such that Parent*(8, _)
+1
 5000
-17 - tupleCase2_V1V2DISTINCT
-variable v1, v2; assign a; while w;
-Select <v1, v2> such that Parent* (w, a) such that Uses (w, v1) pattern a (v2, _"y"_)
-y temp, x temp, x y, temp y, temp temp, y y
+1043 - Parent* left wildcard with syn
+while w;
+Select w such that Parent*(_, w)
+12,6
 5000
-18 - tupleCase3
-variable v1, v2; assign a1, a2;
-Select <v1, v2> such that Next (a1, a2) such that Modifies (a1, v1) such that Modifies (a2, v2) 
-x y, y GCF, GCF LCM, LCM temp, temp y, y x
+1044 - Parent* right wildcard with syn
+if ifs;
+Select ifs such that Parent*(ifs, _)
+17,8,9
 5000
-19 - tupleCase4
-assign a1, a2; while w;
-Select <a1, a2> such that Parent (w, a1) such that Parent (w, a2) such that Uses (a1, "y") such that Uses (a2,"x") such that Next (a1, a2)
-16 17
+1045 - Parent* both stmtNo
+variable v;
+Select v such that Parent*(4, 10)
+a,add,b,c,d,negative,positive
 5000
-20 - tupleCase5
-assign a; variable v1, v2; while w;
-Select <v1, v2> such that Parent* (w, a) such that Modifies (w, v1) such that Uses (a, v2)
-temp y, temp x, y x, y temp, x y, x temp, temp temp, x x, y y
+1046 - Parent* both syns, select from left
+if ifs; while w;
+Select ifs such that Parent*(ifs, w)
+8
 5000
-21 - doublePattern
-assign a1, a2;
-Select a1 pattern a1 ("x",_) pattern a2 (_, _"x"_)
-10, 18
+1047 - Parent* both syns, select from right
+if ifs; while w;
+Select w such that Parent*(ifs, w)
+12
 5000
-22 - callStmt
-call c1;
-Select c1 such that Modifies(c1, "num1")
-1, 9
+1048 - Parent* mix, stmtNo syn
+if ifs;
+Select ifs such that Parent*(4, ifs)
+8,9
 5000
-23 - callAgain
-call c1;
-Select c1 such that Modifies(c1, "num2") such that Next(c1, 10) such that Next*(c1, 13)
-9
+1049 - Parent* mix, syn stmtNo
+while w;
+Select w such that Parent*(w, 7)
+4,6
 5000
-24 - callEntity
-call c1, c2;
-Select <c1, c2> such that Next(c1, c2)
-1 2
+1050 - Modifies syn and ident
+stmt s;
+Select s such that Modifies(s, "a")
+1,4,5,6,7
 5000
-1 - CallCase1
-procedure p;
-Select p such that Calls ("main", p)
-findGCFLCM, output
+1051 - Modifies stmtNo and syn
+variable v;
+Select v such that Modifies(5, v)
+a
+5000
+1052 - Modifies syn and wildcard
+read r;
+Select r such that Modifies(r, _)
+1
+5000
+1053 - Modifies two syns
+while w; variable v;
+Select w such that Modifies(w, v)
+4,6
+5000
+1054 - Uses syn and ident
+stmt s;
+Select s such that Uses(s, "b")
+10,11,14,15,4,5,8,9
+5000
+1055 - Uses stmtNo and syn
+variable v;
+Select v such that Uses(4, v)
+a,b,c
+5000
+1056 - Uses syn and wildcard
+print pr;
+Select pr such that Uses(pr, _)
+13,16,18,19,3
+5000
+1057 - Uses two syns
+if ifs; variable v;
+Select ifs such that Uses(ifs, v)
+17,8,9
+5000
+1058 - Pattern wildcard partial match
+assign a;
+Select a pattern a(_, _"d"_)
+none
+5000
+1059 - Pattern syn exact match
+assign a; variable v;
+Select v pattern a(v, _"10"_)
+a
+5000
+1060 - Pattern ident partial match
+assign a;
+Select a pattern a("d", _"20"_)
+none
+5000
+1061 - Pattern ident exact match
+assign a;
+Select a pattern a("add", _"c"_)
+15
+5000
+1064 - Mix Parent and pattern
+assign a; if ifs;
+Select a such that Parent(ifs, a) pattern a("a", _)
+none
+5000
+1065 - Mix Parent* and pattern
+assign a; while w; variable v;
+Select v  such that Parent*(w, a) pattern a(v, _"b"_)
+a, c, d
+5000
+1066 - Mix Modifies and pattern
+assign a; while w; variable v;
+Select v such that Modifies(w, v) pattern a(v, _"c"_)
+a
+5000
+1067 - Mix Modifies and pattern
+assign a; stmt s; variable v;
+Select s such that Modifies(s, _) pattern a(v, _"10"_)
+1,10,11,14,15,2,4,5,6,7,8,9
+5000
+1068 - Mix Uses and pattern
+assign a; variable v;
+Select a such that Uses(a, v) pattern a("a", _)
+5
+5000
+1069 - Mix Uses and pattern
+assign a; variable v;
+Select v such that Uses(a, v) pattern a(_, _"a"_)
+a,b,c
+5000
+1071 - Mix Parent* and pattern
+assign a; while w;
+Select w such that Parent*(w, a) pattern a("a", _)
+4,6
 5000
