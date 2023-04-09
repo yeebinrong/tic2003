@@ -306,7 +306,7 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 						if (targetTable == "nexts") {
 							sourceColumnWithAlias = targetTableAlias + ".prevStmtNo";
 							if (!direct) {
-								op = " > ";
+								op = " >= ";
 								sourceColumnWithAlias = "CAST(" + targetTableAlias + ".prevStmtNo" + " AS INT)";
 								source = removeQuotes(source);
 							}
@@ -323,7 +323,7 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 					string op = " = ";
 					string targetColumnWithAlias = targetTableAlias + ".stmtNo";
 					if (targetTable == "nexts" && !direct) {
-						op = " < ";
+						op = " <= ";
 						targetColumnWithAlias = "CAST(" + targetTableAlias + ".stmtNo" + " AS INT)";
 						target = removeQuotes(target);
 					}
@@ -409,11 +409,12 @@ string appendJoinOnClause(
 	}
 	else if (mainTable == "procedure" || tableToJoin == "procedure") {
 		tempJoinClause = appendAnd(tempJoinClause);
+		string sourceColumn = ".procedureName";
 		string joinColumn = ".procedureName";
-		if (tableToJoin == "calls" && isValInMap(declarationMap, target)) {
-			joinColumn = ".targetProc";
+		if (mainTable == "calls" && isValInMap(declarationMap, target) && toJoin == target) {
+			sourceColumn = ".targetProc";
 		}
-		tempJoinClause += mainTableAlias + ".procedureName = " + tableToJoinAlias + joinColumn;
+		tempJoinClause += mainTableAlias + sourceColumn + " = " + tableToJoinAlias + joinColumn;
 	}
 	else if (
 		isValInVectTwo({ "read", "print", "assign", "stmt", "while", "if_table", "constant", "parents", "nexts", "calls" }, mainTable)
@@ -784,8 +785,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				(
 					isValInVectTwo({ "while", "if_table" }, declarationMap[source]) &&
 					isValInVectTwo({ "while", "if_table" }, declarationMap[target])
-				) ||
-				declarationMap[source] == "calls" && declarationMap[target] == "calls"
+				) //|| declarationMap[source] == "calls" && declarationMap[target] == "calls"
 			)
 		) {
 			string columnName = declarationMap[source] != "calls" ? ".parentStmtNo" : ".prevStmtNo";
