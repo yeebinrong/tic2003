@@ -420,13 +420,17 @@ string appendJoinOnClause(
 		isValInVectTwo({ "read", "print", "assign", "stmt", "while", "if_table", "constant", "parents", "nexts", "calls" }, mainTable)
 	) {
 		string sourceColumn = ".stmtNo";
+		string joinColumn = ".stmtNo";
 		if (isValInVectTwo({ "parents", "nexts" }, mainTable)) {
 			if (isValInMap(declarationMap, source) && source == toJoin && isValInVectTwo(mainSynonymVars, toJoin)) {
 				sourceColumn = mainTable == "parents" ? ".parentStmtNo" : ".prevStmtNo";
 			}
+			if (isValInMap(declarationMap, target) && target == toJoin && isValInVectTwo({ "while", "if_table" }, declarationMap[target])) {
+				joinColumn = ".parentStmtNo";
+			}
 		}
 		tempJoinClause = appendAnd(tempJoinClause);
-		tempJoinClause += mainTableAlias + sourceColumn + " = " + tableToJoinAlias + ".stmtNo";
+		tempJoinClause += mainTableAlias + sourceColumn + " = " + tableToJoinAlias + joinColumn;
 	}
 	else if (isValInVectTwo({ "read", "print", "assign", "stmt", "while", "if_table", "constant", "parents" }, tableToJoin)) {
 		tempJoinClause = appendAnd(tempJoinClause);
