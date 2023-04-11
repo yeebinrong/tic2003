@@ -1,3 +1,168 @@
+1 - identify all read stmts if any stmt is a direct parent of any stmt NO RELATION PWW
+read r;
+Select r such that Parent(_, _)
+1, 2, 6, 15, 22, 26, 28
+5000
+2 - identify all print stmts if any stmt is a direct child of stmt 4 NO RELATION PNW
+print p;
+Select p such that Parent(4, _)
+7, 16, 17, 23, 32, 33
+5000
+3 - identify all while stmts if any stmt is a direct parent of stmt 5 NO RELATION PWN
+while w;
+Select w such that Parent(_, 5)
+8, 12, 20
+5000
+4 - identify all print stmts who are direct children of any statement ANS RIGHT  PWA
+print p;
+Select p such that Parent(_, p)
+7, 16, 17, 23
+5000
+5 - identify all if stmts who are direct parents of any statement ANS LEFT PAW
+if i;
+Select i such that Parent(i,_)
+4, 5, 13, 29
+5000
+6 - identify all if stmts who are direct parents of while stmts ANS LEFT PAA
+if i; while w;
+Select i such that Parent(i,w)
+4
+5000
+7 - identify all read stmts if any stmt is a direct parent of any stmt NO RELATION iPWW
+read r;
+Select r such that Parent*(_, _)
+1, 2, 6, 15, 22, 26, 28
+5000
+8 - identify all print stmts if any stmt is a direct child of stmt 4 NO RELATION iPNW
+print p;
+Select p such that Parent*(4, _)
+7, 16, 17, 23, 32, 33
+5000
+9 - identify all while stmts if any stmt is a direct parent of stmt 5 NO RELATION iPWN
+while w;
+Select w such that Parent*(_, 5)
+8, 12, 20
+5000
+10 - identify all print stmts who are children of any statement ANS RIGHT  iPWA
+print p;
+Select p such that Parent*(_, p)
+7, 16, 17, 23
+5000
+11 - identify all if stmts who are parents of any statement ANS LEFT iPAW
+if i;
+Select i such that Parent*(i,_)
+4, 5, 13, 29
+5000
+12 - identify all if stmts who are parents of while stmts ANS LEFT iPAA
+if i; while w;
+Select i such that Parent*(i,w)
+4
+5000
+13 - identify all while stmts who are children of if stmts ANS RIGHT iPAA
+if i; while w;
+Select w such that Parent*(i,w)
+8, 12, 20
+5000
+14 - identify all if stmts who are parents of stmt 20 ANS LEFT iPAN
+if i;
+Select i such that Parent*(i,20)
+4, 12, 20
+5000
+15 - identify all if stmts who are children of stmt 12 ANS RIGHT iPNA
+if i; 
+Select i such that Parent*(12,i)
+13
+5000
+16 - identify all if stmts who are children of any stmt ANS RIGHT iPWA
+if i;
+Select i such that Parent*(_,i)
+5, 13
+5000
+17 - identify all if stmts who are parents of any stmt ANS LEFT iPAW
+if i;
+Select i such that Parent*(i,_)
+4, 5, 13, 29
+5000
+18 - identify all if stmts if any stmt uses any variable NO RELATION iPWW
+if i;
+Select i such that uses(_,_)
+4, 5, 13, 29
+5000
+19 - identify all if stmts if any assignment uses any variable NO RELATION iPAW
+if i; assign a;
+Select i such that uses(a,_)
+4, 5, 13, 29
+5000
+20 - identify all if stmts if any assignment uses any variable NO RELATION iPWA
+if i; assign a;
+Select i such that uses(_,a)
+4, 5, 13, 29
+5000
+21 - identify all print stmts that uses any variable ANS LEFT  iPAW
+print p;
+Select p such that uses(p,_)
+7, 16, 17, 23, 32, 33
+5000
+22 - identify all print stmts that uses any variable ANS LEFT  iPAV
+print p; variable v;
+Select p such that uses(p,v)
+7, 16, 17, 23, 32, 33
+5000
+23 - identify all variables that are used by stmt 31 ANS RIGHT iPNV
+variable v;
+Select v such that uses(31,v)
+age
+5000
+24 - identify all variables that are used by assignments ANS RIGHT iPAA
+variable v; assign a;
+Select v such that uses(a,v)
+age, count, num1, num2, num3, num4
+5000
+25 - identify all assignments that uses age  ANS LEFT iPAV
+variable v; assign a;
+Select a such that uses(a,"age")
+30, 31
+5000
+26 - identify all if stmts if any stmt uses any variable NO RELATION iPWW
+if i;
+Select i such that modifies(_,_)
+4, 5, 13, 29
+5000
+19 - identify all if stmts if any assignment modifies any variable NO RELATION iPAW
+if i; assign a;
+Select i such that modifies(a,_)
+4, 5, 13, 29
+5000
+20 - identify all if stmts if any assignment modifies any variable NO RELATION iPWA
+if i; assign a;
+Select i such that modifies(_,a)
+4, 5, 13, 29
+5000
+21 - identify all read stmts that modifies any variable ANS LEFT  iPAW
+read r;
+Select r such that modifies(r,_)
+1, 2, 6, 15, 22, 26, 28
+5000
+22 - identify all read stmts that modifies any variable ANS LEFT  iPAV
+read r; variable v;
+Select p such that modifies(p,v)
+1, 2, 6, 15, 22, 26, 28
+5000
+23 - identify all variables that are modified by stmt 31 ANS RIGHT iPNV
+variable v;
+Select v such that modifies(31,v)
+age
+5000
+24 - identify all variables that are modified by assignments ANS RIGHT iPAA
+variable v; assign a;
+Select v such that modifies(a,v)
+age, count, num1, num2, num3, num4
+5000
+25 - identify all assignments that modified age  ANS LEFT iPAV
+variable v; assign a;
+Select a such that modifies(a,"age")
+30, 31
+5000
 54 - identify all procedures that call another procedure directly
 procedure p,q;
 Select p such that Calls (p,q)
