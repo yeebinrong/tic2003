@@ -333,8 +333,13 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 				if (direct) {
 					clause = appendAnd(clause);
 					clause += targetTableAlias + ".direct = '1'";
+					if ((isValInMap(declarationMap, source) && isValInVectTwo({ "while", "if_table" }, declarationMap[source]))) {
+						string tempAlias = "TABLE_" + source;
+						clause = appendAnd(clause);
+						clause += tempAlias + ".direct = '1'";
+					}
 				}
-				else if (
+				if (
 					isValInMap(declarationMap, target) &&
 					targetTable == "parents" &&
 					(
