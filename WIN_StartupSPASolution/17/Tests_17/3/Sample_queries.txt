@@ -128,37 +128,37 @@ if i;
 Select i such that modifies(_,_)
 4, 5, 13, 29
 5000
-19 - identify all if stmts if any assignment modifies any variable NO RELATION iPAW
+27 - identify all if stmts if any assignment modifies any variable NO RELATION iPAW
 if i; assign a;
 Select i such that modifies(a,_)
 4, 5, 13, 29
 5000
-20 - identify all if stmts if any assignment modifies any variable NO RELATION iPWA
+28 - identify all if stmts if any assignment modifies any variable NO RELATION iPWA
 if i; assign a;
 Select i such that modifies(_,a)
 4, 5, 13, 29
 5000
-21 - identify all read stmts that modifies any variable ANS LEFT  iPAW
+29 - identify all read stmts that modifies any variable ANS LEFT  iPAW
 read r;
 Select r such that modifies(r,_)
 1, 2, 6, 15, 22, 26, 28
 5000
-22 - identify all read stmts that modifies any variable ANS LEFT  iPAV
+30 - identify all read stmts that modifies any variable ANS LEFT  iPAV
 read r; variable v;
 Select p such that modifies(p,v)
 1, 2, 6, 15, 22, 26, 28
 5000
-23 - identify all variables that are modified by stmt 31 ANS RIGHT iPNV
+31 - identify all variables that are modified by stmt 31 ANS RIGHT iPNV
 variable v;
 Select v such that modifies(31,v)
 age
 5000
-24 - identify all variables that are modified by assignments ANS RIGHT iPAA
+32 - identify all variables that are modified by assignments ANS RIGHT iPAA
 variable v; assign a;
 Select v such that modifies(a,v)
 age, count, num1, num2, num3, num4
 5000
-25 - identify all assignments that modified age  ANS LEFT iPAV
+33 - identify all assignments that modified age  ANS LEFT iPAV
 variable v; assign a;
 Select a such that modifies(a,"age")
 30, 31
