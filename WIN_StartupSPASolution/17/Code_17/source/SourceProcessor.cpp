@@ -246,6 +246,7 @@ void SourceProcessor::process(string program) {
 					if (find(temp.begin(), temp.end(), stmtNum) == temp.end()) {
 						containerEndList.back().second.push_back(containerList.back().second);
 						containerEndList.back().second.push_back(stmtNum);
+						prevStmtNumList[procedureName].push_back(containerList.back().second);
 						Database::insertNext(to_string(stmtNum), to_string(containerList.back().second),"1");
 						whileSkip = true;
 					}
