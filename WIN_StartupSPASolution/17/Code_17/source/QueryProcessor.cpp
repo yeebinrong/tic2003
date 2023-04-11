@@ -438,7 +438,12 @@ string appendJoinOnClause(
 			if (isValInMap(declarationMap, source) && source == toJoin && isValInVectTwo(mainSynonymVars, toJoin)) {
 				sourceColumn = mainTable == "parents" ? ".parentStmtNo" : ".prevStmtNo";
 			}
-			if (isValInMap(declarationMap, target) && target == toJoin && isValInVectTwo({ "while", "if_table" }, declarationMap[target])) {
+			if (
+				target == toJoin &&
+				!checkIfIsDigitForClause(source) &&
+				isValInMap(declarationMap, target) &&
+				isValInVectTwo({ "while", "if_table" }, declarationMap[target])
+			) {
 				joinColumn = ".parentStmtNo";
 			}
 		}
@@ -515,7 +520,7 @@ string appendEndOfNestedJoin(string joinClause, vector<string> clauseVars, vecto
 		for (int j = 0; j < clauseVars.size(); j += 1) {
 			if (mainSynonymVar != clauseVars[j]) {
 				vector<pair<int, vector<string>>> relatedClauses;
-				for (int k = 0; k < typeToArgList.size(); k += 1) {
+				for (int k = currMainRefIdx; k >= 0; k -= 1) {
 					vector<string> vars;
 					if (k == currMainRefIdx) {
 						continue;
@@ -536,14 +541,16 @@ string appendEndOfNestedJoin(string joinClause, vector<string> clauseVars, vecto
 					vector<string> relatedVars = relatedClause.second;
 					string tempTableAlias = "";
 					for (int k = 0; k < mainRefIndex.size(); k += 1) {
-						if (typeToArgList[mainRefIndex[k]].first == typeToArgList[relatedClause.first].first) {
+						if (mainRefIndex[k] < currMainRefIdx && typeToArgList[mainRefIndex[k]].first == typeToArgList[relatedClause.first].first) {
 							tempTableAlias = getToJoinAlias(typeToArgList[relatedClause.first].second, "T_" + to_string(k + 1));
 							break;
 						}
 					}
-					for (int x = 0; x < relatedVars.size(); x += 1) {
-						tempJoinClause = appendAnd(tempJoinClause);
-						tempJoinClause += tempTableAlias + "." + relatedVars[x] + " = " + toJoinAlias + "." + relatedVars[x];
+					if (tempTableAlias != "") {
+						for (int x = 0; x < relatedVars.size(); x += 1) {
+							tempJoinClause = appendAnd(tempJoinClause);
+							tempJoinClause += tempTableAlias + "." + relatedVars[x] + " = " + toJoinAlias + "." + relatedVars[x];
+						}
 					}
 				}
 				continue;
@@ -585,7 +592,7 @@ string appendEndOfNestedJoin(string joinClause, vector<string> clauseVars, vecto
 			string tempTableAlias = "";
 			for (int k = 0; k < mainRefIndex.size(); k += 1) {
 				if (typeToArgList[mainRefIndex[k]].first == typeToArgList[relatedClause.first].first) {
-					tempTableAlias = getToJoinAlias(typeToArgList[relatedClause.first].second, "T" + k + 1);
+					tempTableAlias = getToJoinAlias(typeToArgList[relatedClause.first].second, "T_" + to_string(k + 1));
 					break;
 				}
 			}
