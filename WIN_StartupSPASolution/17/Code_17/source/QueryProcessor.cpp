@@ -298,6 +298,14 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 				}
 			}
 			if (isValInVectTwo({ "parents", "nexts" }, targetTable)) {
+				if (
+					mainSynonymType == "stmt" && targetTable == "parents" &&
+					isValInMap(declarationMap, source) && isValInVectTwo({ "while", "if_table" }, declarationMap[source])
+				) {
+					string tempAlias = "TABLE_" + source;
+					clause = appendAnd(clause);
+					clause += tempAlias + ".stmtNo != " + tempAlias + ".parentStmtNo";
+				}
 				if (checkIfIsDigitForClause(source) || (isValInMap(declarationMap, source) && declarationMap[source] == "stmt")) {
 					if (checkIfIsDigitForClause(source)) {
 						clause = appendAnd(clause);
