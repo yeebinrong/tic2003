@@ -86,19 +86,27 @@ void insertForAllContainer(vector<pair<string, int>> containerList, int stmtNum)
 	}
 }
 
-void insertForSpecificContainer(vector<pair<string, int>> containerList, int stmtNum, string type) {
-	for (int i = containerList.size() - 1; i > 0; i -= 1) {
+void insertForSpecificContainer(vector<pair<string, int>> specificContainerList, int stmtNum, string type, vector<pair<string, int>> containerList) {
+
+	for (int i = specificContainerList.size() - 1; i > 0; i -= 1) {
 		string direct = "1";
-		if (i != containerList.size() - 1) {
+
+		if (i != specificContainerList.size() - 1) {
 			direct = "0";
 		}
 		// insert nested while / if statements
+		string lastContainerType = containerList[containerList.size() - 1].first;
 		if (type == "while") {
-			Database::insertWhile(to_string(stmtNum), "0", to_string(containerList[i].second), direct);
+			if (lastContainerType != "while") {
+				direct = "0";
+			}
+			Database::insertWhile(to_string(stmtNum), "0", to_string(specificContainerList[i].second), direct);
 		}
-
 		if (type == "if") {
-			Database::insertIf(to_string(stmtNum), "0", to_string(containerList[i].second), direct);
+			if (!isValInVect({ "if", "ifelse" }, lastContainerType)) {
+				direct = "0";
+			}
+			Database::insertIf(to_string(stmtNum), "0", to_string(specificContainerList[i].second), direct);
 		}
 	}
 }
@@ -299,8 +307,8 @@ void SourceProcessor::process(string program) {
 			stmtNum+=1;
 			Database::insertStmt(to_string(stmtNum));
 			insertForAllContainer(containerList, stmtNum);
-			insertForSpecificContainer(whileList, stmtNum, "while");
-			insertForSpecificContainer(ifelseList, stmtNum, "if");
+			insertForSpecificContainer(whileList, stmtNum, "while", containerList);
+			insertForSpecificContainer(ifelseList, stmtNum, "if", containerList);
 
 			//NEXT AND PARENT INSERT LOGIC PER STMT INCREMENT//
 			if (!containers.size()) { //main
