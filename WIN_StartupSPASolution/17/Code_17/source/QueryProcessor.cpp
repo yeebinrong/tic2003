@@ -492,8 +492,8 @@ string appendJoinOnClause(
 	return joinClause;
 }
 
-string getToJoinAlias(vector<string> clauseVars) {
-	string toJoinAlias = "TO_JOIN";
+string getToJoinAlias(vector<string> clauseVars, string targetTableAlias) {
+	string toJoinAlias = "TO_JOIN_" + targetTableAlias;
 	for (int i = 0; i < clauseVars.size(); i += 1) {
 		string toAdd = clauseVars[i];
 		if (toAdd[0] == '\'' && toAdd[toAdd.size() - 1] == '\'') {
@@ -507,13 +507,45 @@ string getToJoinAlias(vector<string> clauseVars) {
 	return "'" + toJoinAlias + "'";
 }
 
-string appendEndOfNestedJoin(string joinClause, vector<string> clauseVars, vector<string> mainSynonymTypes, vector<string> mainSynonymVars, int currMainRefIdx, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap) {
+string appendEndOfNestedJoin(string joinClause, vector<string> clauseVars, vector<string> mainSynonymTypes, vector<string> mainSynonymVars, vector<int> mainRefIndex, int currMainRefIdx, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap, string targetTableAlias) {
 	string tempJoinClause = "";
-	string toJoinAlias = getToJoinAlias(clauseVars);
+	string toJoinAlias = getToJoinAlias(clauseVars, targetTableAlias);
 	for (int i = 0; i < mainSynonymVars.size(); i += 1) {
 		string mainSynonymVar = mainSynonymVars[i];
 		for (int j = 0; j < clauseVars.size(); j += 1) {
 			if (mainSynonymVar != clauseVars[j]) {
+				vector<pair<int, vector<string>>> relatedClauses;
+				for (int k = 0; k < typeToArgList.size(); k += 1) {
+					vector<string> vars;
+					if (k == currMainRefIdx) {
+						continue;
+					}
+					if (
+						isValInMap(declarationMap, clauseVars[j]) &&
+						!isValInVectTwo(vars, clauseVars[j]) &&
+						isValInVectTwo(typeToArgList[k].second, clauseVars[j])
+					) {
+						vars.push_back(clauseVars[j]);
+					}
+					if (vars.size() != 0) {
+						relatedClauses.push_back({ k, vars });
+					}
+				}
+				for (int z = 0; z < relatedClauses.size(); z += 1) {
+					pair<int, vector<string>> relatedClause = relatedClauses[z];
+					vector<string> relatedVars = relatedClause.second;
+					string tempTableAlias = "";
+					for (int k = 0; k < mainRefIndex.size(); k += 1) {
+						if (typeToArgList[mainRefIndex[k]].first == typeToArgList[relatedClause.first].first) {
+							tempTableAlias = getToJoinAlias(typeToArgList[relatedClause.first].second, "T_" + to_string(k + 1));
+							break;
+						}
+					}
+					for (int x = 0; x < relatedVars.size(); x += 1) {
+						tempJoinClause = appendAnd(tempJoinClause);
+						tempJoinClause += tempTableAlias + "." + relatedVars[x] + " = " + toJoinAlias + "." + relatedVars[x];
+					}
+				}
 				continue;
 			}
 			tempJoinClause = appendAnd(tempJoinClause);
@@ -550,7 +582,13 @@ string appendEndOfNestedJoin(string joinClause, vector<string> clauseVars, vecto
 		for (int i = 0; i < relatedClauses.size(); i += 1) {
 			pair<int, vector<string>> relatedClause = relatedClauses[i];
 			vector<string> relatedVars = relatedClause.second;
-			string tempTableAlias = getToJoinAlias(typeToArgList[relatedClause.first].second);
+			string tempTableAlias = "";
+			for (int k = 0; k < mainRefIndex.size(); k += 1) {
+				if (typeToArgList[mainRefIndex[k]].first == typeToArgList[relatedClause.first].first) {
+					tempTableAlias = getToJoinAlias(typeToArgList[relatedClause.first].second, "T" + k + 1);
+					break;
+				}
+			}
 			for (int j = 0; j < relatedVars.size(); j += 1) {
 				tempJoinClause = appendAnd(tempJoinClause);
 				tempJoinClause += tempTableAlias + "." + relatedVars[j] + " = " + toJoinAlias + "." + relatedVars[j];
@@ -814,7 +852,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 			joinClause += " WHERE " + refWhereClause;
 		}
 		// close off nested join
-		joinClause = appendEndOfNestedJoin(joinClause, clauseVars, mainSynonymTypes, mainSynonymVars, mainRefIndex[i], typeToArgList, declarationMap);
+		joinClause = appendEndOfNestedJoin(joinClause, clauseVars, mainSynonymTypes, mainSynonymVars, mainRefIndex, mainRefIndex[i], typeToArgList, declarationMap, targetTableAlias);
 	}
 	string irrelevantClause = "";
 	// ------------------------------------- CHECK ALL REMAINING IRRELEVANT CLAUSES -------------------------------------
