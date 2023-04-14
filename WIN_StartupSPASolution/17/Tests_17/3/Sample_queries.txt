@@ -66,7 +66,7 @@ Select w such that Parent*(i,w)
 14 - identify all if stmts who are parents of stmt 20 ANS LEFT iPAN
 if i;
 Select i such that Parent*(i,20)
-4, 12, 20
+4
 5000
 15 - identify all if stmts who are children of stmt 12 ANS RIGHT iPNA
 if i; 
@@ -175,7 +175,7 @@ updateNum
 5000
 37 - identify all procedures that are directly called by any procedure 
 procedure q;
-Select v such that Calls (_,q)
+Select q such that Calls (_,q)
 updateNum, updateResult, printNum
 5000
 38 - identify all variables that are modified by assignments 
@@ -215,7 +215,7 @@ computeMultiple, updateNum
 5000
 45 - identify all procedures that are called by any procedure 
 procedure q;
-Select v such that Calls* (_,q)
+Select q such that Calls* (_,q)
 updateNum, updateResult, printNum
 5000
 46 - identify all procedures that are called by any procedure 
