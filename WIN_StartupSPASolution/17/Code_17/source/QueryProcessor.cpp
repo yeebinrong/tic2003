@@ -135,7 +135,7 @@ string checkAndReplaceLike(string str) {
 
 string checkAndAddDirect(string whereClause, string targetTableAlias, int i, vector<int> mainRefIndex, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap) {
 	if (
-		isValInVectTwo({ "parent", "calls", "nexts" }, typeToArgList[mainRefIndex[i]].first) &&
+		isValInVectTwo({ "parent", "next" }, typeToArgList[mainRefIndex[i]].first) &&
 		(
 			typeToArgList[mainRefIndex[i]].second[0] != "'_'" &&
 			!isValInMap(declarationMap, typeToArgList[mainRefIndex[i]].second[0])
@@ -149,6 +149,10 @@ string checkAndAddDirect(string whereClause, string targetTableAlias, int i, vec
 				)
 			)
 		) {
+		whereClause = appendAnd(whereClause);
+		whereClause += targetTableAlias + ".direct = '1'";
+	}
+	else if (isValInVectTwo({ "calls" }, typeToArgList[mainRefIndex[i]].first)) {
 		whereClause = appendAnd(whereClause);
 		whereClause += targetTableAlias + ".direct = '1'";
 	}
@@ -873,16 +877,26 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		if (
 			isValInMap(declarationMap, source) &&
 			isValInMap(declarationMap, target) &&
-			(
-				(
-					isValInVectTwo({ "while", "if_table" }, declarationMap[source]) &&
-					isValInVectTwo({ "while", "if_table" }, declarationMap[target])
-				) //|| declarationMap[source] == "calls" && declarationMap[target] == "calls"
-			)
+			isValInVectTwo({ "while", "if_table" }, declarationMap[source])
 		) {
-			string columnName = declarationMap[source] != "calls" ? ".parentStmtNo" : ".prevStmtNo";
-			refWhereClause = appendAnd(refWhereClause);
-			refWhereClause += "CAST(" + refSourceAlias + columnName + " as INT) < CAST(" + refTargetAlias + columnName + " as INT)";
+			if (
+				isValInMap(declarationMap, target) &&
+				!isValInVectTwo({ "assign", "while", "if_table", "calls", "print", "read", "variable" }, declarationMap[target])
+			) {
+				refWhereClause = appendAnd(refWhereClause);
+				refWhereClause += refSourceAlias + ".stmtNo" + " = " + refTargetAlias + ".stmtNo";
+			}
+			else if (
+				isValInMap(declarationMap, target) &&
+				!isValInVectTwo({ "while", "if_table" }, declarationMap[target])
+			) {
+				refWhereClause = appendAnd(refWhereClause);
+				refWhereClause += refSourceAlias + ".parentStmtNo = " + refSourceAlias + ".stmtNo";
+			}
+			if (isValInVectTwo({ "while", "if_table" }, declarationMap[target])) {
+				refWhereClause = appendAnd(refWhereClause);
+				refWhereClause += "CAST(" + refSourceAlias + ".parentStmtNo as INT) < CAST(" + refTargetAlias + ".stmtNo as INT)";
+			}
 		}
 		refWhereClause = checkAndAddDirect(refWhereClause, targetTableAlias, i, mainRefIndex, typeToArgList, declarationMap);
 		if (refWhereClause != "") {
