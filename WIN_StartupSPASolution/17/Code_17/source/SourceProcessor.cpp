@@ -199,6 +199,36 @@ vector<vector<int>> checkPopBack(vector<vector<int>> indPrevStmtNumList) {
 	}
 	return indPrevStmtNumList;
 }
+void insertAssignForContainer(vector<pair<string, int>> containerList) {
+	for (int i = containerList.size() - 1; i > 0; i--) {//skip main
+		cout << "assignment:" << containerList[i].second << endl;
+		Database::insertAssignment(to_string(containerList[i].second));
+	}
+}
+
+void insertModifiesForContainer(string procedureName, string currToken, vector<pair<string, int>> containerList) {
+	for (int i = containerList.size() - 1; i > 0; i--) {//skip main
+		Database::insertModifies(to_string(containerList[i].second), procedureName, currToken);
+	}
+}
+
+void insertUsesForContainer( string procedureName, string currToken, vector<pair<string, int>> containerList) {
+	for (int i = containerList.size() - 1; i > 0; i--) {//skip main
+		Database::insertUses(to_string(containerList[i].second), procedureName, currToken);
+	}
+}
+
+void insertModifiesForProcedure(vector<pair<string, int>> sourceProc, string currToken) {
+	for (int i = sourceProc.size() - 1; i >= 0; i--) {
+		Database::insertModifies(to_string(sourceProc[i].second), sourceProc[i].first, currToken);
+	}
+}
+
+void insertUsesForProcedure(vector<pair<string, int>> sourceProc, string currToken) {
+	for (int i = sourceProc.size() - 1; i >= 0; i--) {
+		Database::insertUses(to_string(sourceProc[i].second), sourceProc[i].first, currToken);
+	}
+}
 
 
 
@@ -388,6 +418,7 @@ void SourceProcessor::process(string program) {
 				isInExpr = true;
 				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertAssignment(to_string(stmtNum));
+				//insertAssignForContainer(containerList);
 				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
 				insertForIndirectUseMod(procedureName, currToken, procCallMap, "mod");
 				insertUseModForContHeader(containerList, procedureName, currToken, "mod");
@@ -398,6 +429,8 @@ void SourceProcessor::process(string program) {
 				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertRead(to_string(stmtNum));
 				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
+				insertModifiesForContainer(procedureName, currToken, containerList);
+				insertModifiesForProcedure(procCallMap[procedureName], currToken);
 				insertForIndirectUseMod(procedureName, currToken, procCallMap, "mod");
 				insertUseModForContHeader(containerList, procedureName, currToken, "mod");
 			}
@@ -405,6 +438,8 @@ void SourceProcessor::process(string program) {
 				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertPrint(to_string(stmtNum));
 				Database::insertUses(to_string(stmtNum), procedureName, currToken);
+				insertUsesForContainer(procedureName, currToken, containerList);
+				insertUsesForProcedure(procCallMap[procedureName], currToken);
 				insertForIndirectUseMod(procedureName, currToken, procCallMap, "use");
 				insertUseModForContHeader(containerList, procedureName, currToken, "use");
 			}
