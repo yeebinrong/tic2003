@@ -685,7 +685,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 					source = "'" + source + "'";
 					offset += 1;
 				}
-				else if (isdigit(source[0])) {
+				else if (isdigit(source[0]) || source == "_") {
 					source = "'" + source + "'";
 				}
 				offset += 3;
