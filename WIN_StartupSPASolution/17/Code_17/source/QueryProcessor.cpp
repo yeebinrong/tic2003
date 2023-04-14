@@ -135,7 +135,7 @@ string checkAndReplaceLike(string str) {
 
 string checkAndAddDirect(string whereClause, string targetTableAlias, int i, vector<int> mainRefIndex, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap) {
 	if (
-		isValInVectTwo({ "parent", "calls", "next" }, typeToArgList[mainRefIndex[i]].first) &&
+		isValInVectTwo({ "parent", "calls", "nexts" }, typeToArgList[mainRefIndex[i]].first) &&
 		(
 			typeToArgList[mainRefIndex[i]].second[0] != "'_'" &&
 			!isValInMap(declarationMap, typeToArgList[mainRefIndex[i]].second[0])
@@ -449,12 +449,8 @@ string appendJoinOnClause(
 			) {
 				sourceColumn = ".parentStmtNo";
 				if (
-					!checkIfIsDigitForClause(target) &&
-					target != "'_'" &&
-					!(
-						isValInMap(declarationMap, source) &&
-						isValInVectTwo({ "stmt", "while", "if_table" }, declarationMap[source])
-					)
+					isValInMap(declarationMap, target) &&
+					!isValInVectTwo({ "while", "if_table", "calls" }, declarationMap[target])
 				) {
 					joinColumn = ".parentStmtNo";
 				}
