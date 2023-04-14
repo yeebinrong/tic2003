@@ -181,7 +181,7 @@ Select p such that Parent* (w, p)
 37 - identify statements within a loop
 stmt s; while w;
 Select s such that Parent* (w, s)
-8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20
 5000
 38 - identify assignments within a nested loop
 assign a; while w1; while w2;
@@ -196,7 +196,7 @@ num4
 40 - identify statements within a loop nested in if
 stmt s; while w; if i;
 Select s such that Parent* (w,s) such that Parent* (i, w)
-8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20
 5000
 41 - identify statements within an if container that is nested within a loop
 stmt s; while w; if i;
