@@ -199,12 +199,6 @@ vector<vector<int>> checkPopBack(vector<vector<int>> indPrevStmtNumList) {
 	}
 	return indPrevStmtNumList;
 }
-void insertAssignForContainer(vector<pair<string, int>> containerList) {
-	for (int i = containerList.size() - 1; i > 0; i--) {//skip main
-		cout << "assignment:" << containerList[i].second << endl;
-		Database::insertAssignment(to_string(containerList[i].second));
-	}
-}
 
 void insertModifiesForContainer(string procedureName, string currToken, vector<pair<string, int>> containerList) {
 	for (int i = containerList.size() - 1; i > 0; i--) {//skip main
@@ -278,7 +272,7 @@ void SourceProcessor::process(string program) {
 		string prevToken = tokens.at(i - 1);
 		string currToken = tokens.at(i);
 		if (containers.size() > 0 && currToken == "}") {
-			if (containers[containers.size() - 1].first != "if") {
+			if (!isValInVect({ "if", "main" }, containers[containers.size() - 1].first)) {
 				if (containers[containers.size() - 1].first == "while") {//while
 					vector<int> temp = containerEndList.back().second;
 					if (find(temp.begin(), temp.end(), stmtNum) == temp.end()) {
@@ -418,7 +412,6 @@ void SourceProcessor::process(string program) {
 				isInExpr = true;
 				Database::insertVariable(procedureName, currToken, to_string(stmtNum));
 				Database::insertAssignment(to_string(stmtNum));
-				//insertAssignForContainer(containerList);
 				Database::insertModifies(to_string(stmtNum), procedureName, currToken);
 				insertForIndirectUseMod(procedureName, currToken, procCallMap, "mod");
 				insertUseModForContHeader(containerList, procedureName, currToken, "mod");
@@ -481,8 +474,6 @@ void SourceProcessor::process(string program) {
 				procedureStart = stmtNum + 1;
 				prevProcedure = procedureName;
 				procedureName = currToken;
-				//empty containerList
-				containerList.clear();
 				indPrevStmtNumList = {};
 			}
 			

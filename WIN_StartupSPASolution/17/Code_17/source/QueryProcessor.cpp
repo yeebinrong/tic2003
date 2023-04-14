@@ -302,9 +302,13 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 					mainSynonymType == "stmt" && targetTable == "parents" &&
 					isValInMap(declarationMap, source) && isValInVectTwo({ "while", "if_table" }, declarationMap[source])
 				) {
-					string tempAlias = "TABLE_" + source;
+					string tempTargetAlias = "TABLE_" + source;
+					string tempSourceAlias = tempTargetAlias;
+					if (isValInMap(declarationMap, target) && declarationMap[target] == "stmt") {
+						tempSourceAlias = "TABLE_" + target;
+					}
 					clause = appendAnd(clause);
-					clause += tempAlias + ".stmtNo != " + tempAlias + ".parentStmtNo";
+					clause += tempSourceAlias + ".stmtNo != " + tempTargetAlias + ".parentStmtNo";
 				}
 				if (checkIfIsDigitForClause(source) || (isValInMap(declarationMap, source) && declarationMap[source] == "stmt")) {
 					if (checkIfIsDigitForClause(source)) {
@@ -435,12 +439,36 @@ string appendJoinOnClause(
 		string sourceColumn = ".stmtNo";
 		string joinColumn = ".stmtNo";
 		if (isValInVectTwo({ "parents", "nexts" }, mainTable)) {
-			if (isValInMap(declarationMap, source) && source == toJoin && isValInVectTwo(mainSynonymVars, toJoin)) {
-				sourceColumn = mainTable == "parents" ? ".parentStmtNo" : ".prevStmtNo";
+			if (
+				mainTable == "parents" &&
+				(
+					source == toJoin &&
+					isValInMap(declarationMap, source) &&
+					isValInVectTwo({ "while", "if_table", "stmt" }, declarationMap[toJoin])
+				)
+			) {
+				sourceColumn = ".parentStmtNo";
+				if (
+					!checkIfIsDigitForClause(target) &&
+					target != "'_'" &&
+					!(
+						isValInMap(declarationMap, source) &&
+						isValInVectTwo({ "stmt", "while", "if_table" }, declarationMap[source])
+					)
+				) {
+					joinColumn = ".parentStmtNo";
+				}
+			}
+			else if (
+				isValInMap(declarationMap, source) &&
+				source == toJoin &&
+				mainTable == "nexts"
+			) {
+				sourceColumn = ".prevStmtNo";
 			}
 			if (
-				target == toJoin &&
 				!checkIfIsDigitForClause(source) &&
+				target == toJoin &&
 				isValInMap(declarationMap, target) &&
 				isValInVectTwo({ "while", "if_table" }, declarationMap[target])
 			) {
@@ -477,6 +505,12 @@ string appendJoinOnClause(
 		else if (mainTable == "pattern_table" && (tableToJoin == "modifies" || tableToJoin == "uses")) {
 			sourceColumn = ".source";
 			targetColumn = ".target";
+		}
+		else if (
+			isValInMap(declarationMap, target) &&
+			isValInVectTwo({ "while", "if_table" }, tableToJoin)
+		) {
+			targetColumn = ".parentStmtNo";
 		}
 		tempJoinClause = appendAnd(tempJoinClause);
 		tempJoinClause += mainTableAlias + sourceColumn + " = " + tableToJoinAlias + targetColumn;
