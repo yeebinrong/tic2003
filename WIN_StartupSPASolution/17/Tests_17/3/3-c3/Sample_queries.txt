@@ -21,7 +21,7 @@ Select <r,p> such that Next* (r, p)
 5 - identify stmts and it's direct parent
 stmt s1, s2;
 Select <s1, s2> such that Parent (s1, s2)
-4 5, 4 8, 4 12, 4 22, 4 23, 4 24, 5 6, 5 7, 8 9, 8 10, 8 11, 12 13, 12 18, 12 19, 12 20, 13 14, 13 15, 13 16, 13 17
+4 5, 4 8, 4 12, 4 22, 4 23, 4 24, 5 6, 5 7, 8 9, 8 10, 8 11, 12 13, 12 18, 12 19, 12 20, 13 14, 13 15, 13 16, 13 17, 20 21, 29 30, 29 31
 5000
 6 - identify read and it's parent 
 stmt s; read r;
@@ -31,32 +31,32 @@ Select <s, r> such that Parent* (s, r)
 7 - identify print and it's parent 
 stmt s; print p;
 Select <s, p> such that Parent* (s, p)
-4 7, 4 16, 4 17, 4 23, 5 7, 12 16, 13 16
+4 7, 4 16, 4 17, 4 23, 5 7, 12 16, 12 17, 13 16, 13 17
 5000
 8 - identify all procedures that call another procedure directly
 procedure p,q,t;
 Select <p,q,t> such that Calls (p,q) such that Calls (q,t)
-computeMultiple updateNum printNum
+computeMultiple updateNum printNum, updateNum printNum updateResult
 5000
 9 - identify all procedures that call another procedure that calls another procedure
 procedure p,q,t;
 Select <p,q,t> such that Calls* (p,q) such that Calls* (q,t)
-computeMultiple updateNum printNum, computeMultiple printNum, updateResult, updateNum printNum updateResult
+computeMultiple updateNum printNum, computeMultiple printNum updateResult, updateNum printNum updateResult, computeMultiple updateNum updateResult
 5000
 10 - identify all stmt and it's direct next stmt
 read r, stmt s, assign a;
-Select <r,s> such that Next (r, s) such that Next (s, a)
+Select <r,s,a > such that Next (r, s) such that Next (s, a)
 1 2 3, 6 8 9, 15 16 18, 28 29 30, 28 29 31
 5000
 11 - identify all stmt and it's next stmt
 read r, print p, call c;
 Select <r,p,c> such that Next* (r, p) such that Next* (p, c) 
-1 16 24, 1 16 14, 1 17 14, 1 17 24, 1 23 24, 2 16 24, 2 16 14, 2 17 14,  2 17 24, 2 23 24, 15 16 24, 15 16 14, 15 17 24,15 17 14,  22 23 24
+1 16 24, 1 16 14, 1 17 14, 1 17 24, 1 23 24, 2 16 24, 2 16 14, 2 17 14,  2 17 24, 2 23 24, 15 16 24, 15 16 14, 15 17 24,15 17 14, 15 23 24,  22 23 24
 5000
 12 - identify stmts and it's direct parent
 stmt s1, s2, s3;
 Select <s1, s2, s3> such that Parent (s1, s2)  such that Parent (s2, s3)
-4 12 13, 12 13 14, 12 13 15, 12 13 16, 12 13 17, 4 12 18, 4 12 19, 4 12 20, 12 20 21
+4 5 6, 4 5 7, 4 8 10, 4 8 11, 4 8 9, 4 12 13, 12 13 14, 12 13 15, 12 13 16, 12 13 17, 4 12 18, 4 12 19, 4 12 20, 12 20 21
 5000
 13 - identify read and it's parent 
 stmt s1, s2; read r;
@@ -66,5 +66,5 @@ Select <s1, s2, r> such that Parent* (s1, s2) such that Parent* (s2, r)
 14 - identify stmt and it's parent with a non relevant variable
 stmt s; read r; procedure p; variable v;
 Select <s, r, v> such that Parent (s, r) such that Uses(p,v)
-5 6 age, 5 6 count, 5 6 num1, 5 6 num2, 5 6 num3, 5 6 num4, 5 22 age, 5 22 count, 5 22 num1, 5 22 num2, 5 22 num3, 5 22 num4, 12 15 age, 12 15 count, 12 15 num1, 12 15 num2, 12 15 num3, 12 15 num4, 13 15 age, 13 15 count, 13 15 num1, 13 15 num2, 13 15 num3, 13 15 num4
+4 22 age, 4 22 count, 4 22 num1, 4 22 num2, 4 22 num3, 4 22 num4, 5 6 age, 5 6 count, 5 6 num1, 5 6 num2, 5 6 num3, 5 6 num4, 13 15 age, 13 15 count, 13 15 num1, 13 15 num2, 13 15 num3, 13 15 num4
 5000
