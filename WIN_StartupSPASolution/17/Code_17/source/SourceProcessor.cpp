@@ -44,15 +44,6 @@ void insertForIndirectUseMod(string currProc, string varName, map<string, vector
 	}
 }
 
-//void printContainerList(vector<pair<string, int>> containerList, string text) {
-//	cout << text << endl;
-//	while (containerList.size()) {
-//		cout << containerList.back().second << ", ";
-//		containerList.pop_back();
-//	}
-//	cout << text << " end" << endl;
-//}
-
 
 // method to insert variable and constants from expr
 void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset,
