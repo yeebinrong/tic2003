@@ -85,7 +85,7 @@ bool isExactMatch(string str) {
 	return true;
 }
 
-bool isDirect(string targetTable) {
+bool isDirect(string targetTable, string source, string target, map<string, string> declarationMap) {
 	if (isValInVectTwo({ "next*", "parent*", "calls*" }, targetTable)) {
 		return false;
 	}
@@ -244,6 +244,7 @@ string formatTableName(string tableName) {
 }
 
 string appendWhereClause(string clause, string targetTable, string targetTableAlias, vector<string> mainSynonymVars, vector<string> clauseVars, map<string, string> declarationMap, bool direct) {
+	bool directAdded = false;
 	for (int i = 0; i < mainSynonymVars.size(); i += 1) {
 		if (!isValInVectTwo(clauseVars, mainSynonymVars[i])) {
 			bool skip = true;
@@ -346,14 +347,22 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 					clause += targetColumnWithAlias + op + target;
 				}
 
-				if (direct) {
-					clause = appendAnd(clause);
-					clause += targetTableAlias + ".direct = '1'";
-					if ((isValInMap(declarationMap, source) && isValInVectTwo({ "while", "if_table" }, declarationMap[source]))) {
+				if (direct && !directAdded) {
+					string columnName = ".direct";
+					if (isValInMap(declarationMap, source) && isValInVectTwo({ "while", "if_table" }, declarationMap[source])) {
+						if (
+							targetTable == "nexts" &&
+							isValInMap(declarationMap, target) && isValInVectTwo({ "while", "if_table" }, declarationMap[target])
+						) {
+							columnName = ".directCont";
+						}
 						string tempAlias = "TABLE_" + source;
 						clause = appendAnd(clause);
 						clause += tempAlias + ".direct = '1'";
 					}
+					clause = appendAnd(clause);
+					clause += targetTableAlias + columnName + " = '1'";
+					directAdded = true;
 				}
 				if (
 					isValInMap(declarationMap, target) &&
@@ -546,6 +555,22 @@ string getToJoinAlias(vector<string> clauseVars, string targetTableAlias) {
 	return "'" + toJoinAlias + "'";
 }
 
+bool deepEqualVect(vector<string> a, vector<string> b) {
+	for (int i = 0; i < a.size(); i += 1) {
+		bool currHasMatch = false;
+		for (int j = 0; j < b.size(); j += 1) {
+			if (a[i] == b[j]) {
+				currHasMatch = true;
+				break;
+			}
+		}
+		if (!currHasMatch) {
+			return false;
+		}
+	}
+	return true;
+}
+
 string appendEndOfNestedJoin(string joinClause, vector<string> clauseVars, vector<string> mainSynonymTypes, vector<string> mainSynonymVars, vector<int> mainRefIndex, int currMainRefIdx, vector<pair<string, vector<string>>> typeToArgList, map<string, string> declarationMap, string targetTableAlias) {
 	string tempJoinClause = "";
 	string toJoinAlias = getToJoinAlias(clauseVars, targetTableAlias);
@@ -575,7 +600,11 @@ string appendEndOfNestedJoin(string joinClause, vector<string> clauseVars, vecto
 					vector<string> relatedVars = relatedClause.second;
 					string tempTableAlias = "";
 					for (int k = 0; k < mainRefIndex.size(); k += 1) {
-						if (mainRefIndex[k] < currMainRefIdx && typeToArgList[mainRefIndex[k]].first == typeToArgList[relatedClause.first].first) {
+						if (
+							mainRefIndex[k] < currMainRefIdx &&
+							typeToArgList[mainRefIndex[k]].first == typeToArgList[relatedClause.first].first &&
+							deepEqualVect(typeToArgList[mainRefIndex[k]].second, typeToArgList[relatedClause.first].second)
+						) {
 							tempTableAlias = getToJoinAlias(typeToArgList[relatedClause.first].second, "T_" + to_string(k + 1));
 							break;
 						}
@@ -867,7 +896,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				patternRef, target, refTargetAlias,
 				targetTable, targetTableAlias, declarationMap);
 		}
-		bool targetDirect = isDirect(unformattedTargetTable);
+		bool targetDirect = isDirect(unformattedTargetTable, source, target, declarationMap);
 		// Append where clause
 		refWhereClause = appendWhereClause(
 			refWhereClause,
@@ -894,8 +923,12 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 				refWhereClause += refSourceAlias + ".parentStmtNo = " + refSourceAlias + ".stmtNo";
 			}
 			if (isValInVectTwo({ "while", "if_table" }, declarationMap[target])) {
+				if (targetTable != "nexts") {
+					refWhereClause = appendAnd(refWhereClause);
+					refWhereClause += "CAST(" + refSourceAlias + ".parentStmtNo as INT) < CAST(" + refTargetAlias + ".stmtNo as INT)";
+				}
 				refWhereClause = appendAnd(refWhereClause);
-				refWhereClause += "CAST(" + refSourceAlias + ".parentStmtNo as INT) < CAST(" + refTargetAlias + ".stmtNo as INT)";
+				refWhereClause += refSourceAlias + ".stmtNo != " + refTargetAlias + ".stmtNo";
 			}
 		}
 		refWhereClause = checkAndAddDirect(refWhereClause, targetTableAlias, i, mainRefIndex, typeToArgList, declarationMap);
@@ -919,7 +952,7 @@ void QueryProcessor::evaluate(string query, vector<string>& output) {
 		string source = clauseVars[0];
 		string target = clauseVars[1];
 		string irrWhereClause = "";
-		bool targetDirect = isDirect(unformattedTargetTable);
+		bool targetDirect = isDirect(unformattedTargetTable, source, target, declarationMap);
 		irrelevantClause = appendAnd(irrelevantClause);
 		irrelevantClause += "(SELECT COUNT(*) FROM " + targetTable;
 		irrWhereClause = appendWhereClause(
