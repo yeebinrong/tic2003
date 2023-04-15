@@ -336,6 +336,15 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 						clause += targetTableAlias + ".stmtNo != " + targetTableAlias + ".parentStmtNo";
 					}
 				}
+				if (
+					targetTable == "nexts" &&
+					isValInMap(declarationMap, target) &&
+					isValInVectTwo({ "while", "if_table" }, declarationMap[target])
+				) {
+					clause = appendAnd(clause);
+					string tempAlias = "TABLE_" + target;
+					clause += tempAlias + ".isParent = '1'";
+				}
 				if (checkIfIsDigitForClause(target)) {
 					clause = appendAnd(clause);
 					string op = " = ";
@@ -347,16 +356,9 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 					}
 					clause += targetColumnWithAlias + op + target;
 				}
-
 				if (direct && !directAdded) {
 					string columnName = ".direct";
 					if (isValInMap(declarationMap, source) && isValInVectTwo({ "while", "if_table" }, declarationMap[source])) {
-						if (
-							targetTable == "nexts" &&
-							isValInMap(declarationMap, target) && isValInVectTwo({ "while", "if_table" }, declarationMap[target])
-						) {
-							columnName = ".directCont";
-						}
 						string tempAlias = "TABLE_" + source;
 						clause = appendAnd(clause);
 						clause += tempAlias + ".direct = '1'";
@@ -479,6 +481,7 @@ string appendJoinOnClause(
 				sourceColumn = ".prevStmtNo";
 			}
 			if (
+				mainTable != "nexts" &&
 				!(
 					mainSynonymVars.size() != 1 &&
 					isValInMap(declarationMap, source) &&
