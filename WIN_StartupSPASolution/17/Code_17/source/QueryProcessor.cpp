@@ -467,6 +467,9 @@ string appendJoinOnClause(
 			) {
 				sourceColumn = ".parentStmtNo";
 				if (
+					toJoin == source &&
+					isValInMap(declarationMap, source) &&
+					isValInVectTwo({ "while", "if_table" }, declarationMap[source]) &&
 					isValInMap(declarationMap, target) &&
 					!isValInVectTwo({ "while", "if_table", "calls" }, declarationMap[target])
 				) {
