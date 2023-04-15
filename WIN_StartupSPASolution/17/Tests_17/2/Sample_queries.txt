@@ -201,7 +201,7 @@ Select s such that Parent* (w,s) such that Parent* (i, w)
 41 - identify statements within an if container that is nested within a loop
 stmt s; while w; if i;
 Select s such that Parent* (i,s) such that Parent* (w, i)
-13, 14, 15, 16
+14, 15, 16
 5000
 42 - identify assignment that uses count and uses pattern
 assign a; variable v;
