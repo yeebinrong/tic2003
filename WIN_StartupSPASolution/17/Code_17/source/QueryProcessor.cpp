@@ -245,6 +245,7 @@ string formatTableName(string tableName) {
 
 string appendWhereClause(string clause, string targetTable, string targetTableAlias, vector<string> mainSynonymVars, vector<string> clauseVars, map<string, string> declarationMap, bool direct) {
 	bool directAdded = false;
+	bool isFirstAdded = false;
 	for (int i = 0; i < mainSynonymVars.size(); i += 1) {
 		if (!isValInVectTwo(clauseVars, mainSynonymVars[i])) {
 			bool skip = true;
@@ -335,6 +336,15 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 						clause += targetTableAlias + ".stmtNo != " + targetTableAlias + ".parentStmtNo";
 					}
 				}
+				if (
+					targetTable == "nexts" &&
+					isValInMap(declarationMap, target) &&
+					isValInVectTwo({ "while", "if_table" }, declarationMap[target])
+				) {
+					clause = appendAnd(clause);
+					string tempAlias = "TABLE_" + target;
+					clause += tempAlias + ".isParent = '1'";
+				}
 				if (checkIfIsDigitForClause(target)) {
 					clause = appendAnd(clause);
 					string op = " = ";
@@ -346,16 +356,9 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 					}
 					clause += targetColumnWithAlias + op + target;
 				}
-
 				if (direct && !directAdded) {
 					string columnName = ".direct";
 					if (isValInMap(declarationMap, source) && isValInVectTwo({ "while", "if_table" }, declarationMap[source])) {
-						if (
-							targetTable == "nexts" &&
-							isValInMap(declarationMap, target) && isValInVectTwo({ "while", "if_table" }, declarationMap[target])
-						) {
-							columnName = ".directCont";
-						}
 						string tempAlias = "TABLE_" + source;
 						clause = appendAnd(clause);
 						clause += tempAlias + ".direct = '1'";
@@ -365,6 +368,7 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 					directAdded = true;
 				}
 				if (
+					!isFirstAdded &&
 					isValInMap(declarationMap, target) &&
 					targetTable == "parents" &&
 					(
@@ -379,6 +383,7 @@ string appendWhereClause(string clause, string targetTable, string targetTableAl
 				) {
 					clause = appendAnd(clause);
 					clause += targetTableAlias + ".isFirst = '0'";
+					isFirstAdded = true;
 				}
 			}
 		}
@@ -476,6 +481,12 @@ string appendJoinOnClause(
 				sourceColumn = ".prevStmtNo";
 			}
 			if (
+				mainTable != "nexts" &&
+				!(
+					mainSynonymVars.size() != 1 &&
+					isValInMap(declarationMap, source) &&
+					isValInVectTwo({ "while", "if_table" }, declarationMap[source])
+				) &&
 				!checkIfIsDigitForClause(source) &&
 				target == toJoin &&
 				isValInMap(declarationMap, target) &&
