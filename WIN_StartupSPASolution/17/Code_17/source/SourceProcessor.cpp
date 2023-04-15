@@ -44,6 +44,16 @@ void insertForIndirectUseMod(string currProc, string varName, map<string, vector
 	}
 }
 
+//void printContainerList(vector<pair<string, int>> containerList, string text) {
+//	cout << text << endl;
+//	while (containerList.size()) {
+//		cout << containerList.back().second << ", ";
+//		containerList.pop_back();
+//	}
+//	cout << text << " end" << endl;
+//}
+
+
 // method to insert variable and constants from expr
 void insertExpr(vector<string> loopCondition, vector<string> tokens, int currIdx, int initialOffset,
 		int stmtNum, string procedureName, vector<pair<string, int>> containerList, map<string, vector<pair<string, int>>> procCallMap) {
@@ -143,6 +153,8 @@ void insertForAllCalls(string targetProc, int currProcCallNo, string currProc, m
 	}
 }
 
+
+
 vector<vector<int>> insertIPSNL(vector<vector<int>> indPrevStmtNumList, int stmtNum) {
 	if (indPrevStmtNumList.size()) {
 		indPrevStmtNumList.back().push_back(stmtNum);
@@ -167,6 +179,10 @@ void insertContIndirectNext(int stmtNum, vector<pair<string,int>> containers, in
 		for (int x = 0; x <= iterateFor; x++) {
 			startPoint -= 1;
 			for (int i = stmtNum; i >= endPoint; i--) {
+
+				if ((containers.back().first != "while") && (i >= startPoint)) {
+					continue;
+				}
 				Database::insertNext(to_string(i), to_string(startPoint), "0");
 			}
 		}
