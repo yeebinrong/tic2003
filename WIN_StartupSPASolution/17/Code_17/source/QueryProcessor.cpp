@@ -567,15 +567,11 @@ string getToJoinAlias(vector<string> clauseVars, string targetTableAlias) {
 }
 
 bool deepEqualVect(vector<string> a, vector<string> b) {
+	if (a.size() != b.size()) {
+		return false;
+	}
 	for (int i = 0; i < a.size(); i += 1) {
-		bool currHasMatch = false;
-		for (int j = 0; j < b.size(); j += 1) {
-			if (a[i] == b[j]) {
-				currHasMatch = true;
-				break;
-			}
-		}
-		if (!currHasMatch) {
+		if (a[i] != b[i]) {
 			return false;
 		}
 	}
@@ -665,14 +661,20 @@ string appendEndOfNestedJoin(string joinClause, vector<string> clauseVars, vecto
 			vector<string> relatedVars = relatedClause.second;
 			string tempTableAlias = "";
 			for (int k = 0; k < mainRefIndex.size(); k += 1) {
-				if (typeToArgList[mainRefIndex[k]].first == typeToArgList[relatedClause.first].first) {
+				if (
+					typeToArgList[mainRefIndex[k]].first == typeToArgList[relatedClause.first].first &&
+					deepEqualVect(typeToArgList[mainRefIndex[k]].second, typeToArgList[relatedClause.first].second)
+				) {
+
 					tempTableAlias = getToJoinAlias(typeToArgList[relatedClause.first].second, "T_" + to_string(k + 1));
 					break;
 				}
 			}
-			for (int j = 0; j < relatedVars.size(); j += 1) {
-				tempJoinClause = appendAnd(tempJoinClause);
-				tempJoinClause += tempTableAlias + "." + relatedVars[j] + " = " + toJoinAlias + "." + relatedVars[j];
+			if (tempTableAlias != "") {
+				for (int j = 0; j < relatedVars.size(); j += 1) {
+					tempJoinClause = appendAnd(tempJoinClause);
+					tempJoinClause += tempTableAlias + "." + relatedVars[j] + " = " + toJoinAlias + "." + relatedVars[j];
+				}
 			}
 		}
 	}
