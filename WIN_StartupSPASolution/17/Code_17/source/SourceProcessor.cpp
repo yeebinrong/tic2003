@@ -296,13 +296,13 @@ void SourceProcessor::process(string program) {
 						containerEndList.back().second.push_back(stmtNum);
 						prevStmtNumList[procedureName].push_back(containerList.back().second);
 						Database::insertNext(to_string(stmtNum), to_string(containerList.back().second),"1");
-						whileSkip = true;
 					}
 					else {
 						containerEndList.back().second.pop_back();
 						Database::insertNext(to_string(containerEndList.back().second.back()), to_string(containerList.back().second), "1");
 						prevStmtNumList[procedureName].push_back(containerList.back().second);
 					}
+					whileSkip = true;
 					indPrevStmtNumList = checkPopBack(indPrevStmtNumList);
 					whileList.pop_back();
 				}
@@ -511,4 +511,4 @@ void SourceProcessor::process(string program) {
 			}
 		}
 	}
-}		
+}		 
