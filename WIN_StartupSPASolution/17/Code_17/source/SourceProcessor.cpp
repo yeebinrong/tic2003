@@ -183,29 +183,35 @@ void insertContIndirectNext(int stmtNum, vector<pair<string,int>> containers, in
 				if ((containers.back().first != "while") && (i >= startPoint)) {
 					continue;
 				}
-				Database::insertNext(to_string(i), to_string(startPoint), "0");
+				Database::insertNext(to_string(i), to_string(startPoint), "0", "0");
 			}
 		}
 		if (containers.back().first == "ifelse") {
 			containers.pop_back(); 
 		}
-		largestContHead = containers.back().second;
+		largestContHead = containers.back().second;//previous container header
 		containers.pop_back();
+		if (containers.size()) {
+			for (pair<string, int> x : containers) {
+				Database::insertNext(to_string(largestContHead), to_string(x.second), to_string(0), to_string(1));
+				Database::insertNext(to_string(x.second), to_string(largestContHead), to_string(0), to_string(1));
+			}
+		}
 	}
 	for (int i = (largestContHead - 1) ; i >= procedureStart; i--) {
-		Database::insertNext(to_string(i), to_string(stmtNum), "0");
+		Database::insertNext(to_string(i), to_string(stmtNum), "0", "0");
 	}
 }
 
 void insertIndirectNext(int start, int end) {
 	for (int i = start-1; i >= end; i--) {
-		Database::insertNext(to_string(i), to_string(start),  "0");
+		Database::insertNext(to_string(i), to_string(start), "0", "0");
 	}
 }
 
 void insertIfElseIndirectNext(int currStmtNum, vector<int> prevList) {
 	for (int i = prevList.size()-1; i > 0 ; i--) {
-		Database::insertNext(to_string(prevList.at(i)), to_string(currStmtNum), "0");
+		Database::insertNext(to_string(prevList.at(i)), to_string(currStmtNum), "0", "0");
 	}
 }
 
@@ -289,24 +295,24 @@ void SourceProcessor::process(string program) {
 		string currToken = tokens.at(i);
 		if (containers.size() > 0 && currToken == "}") {
 			if (!isValInVect({ "if", "main" }, containers[containers.size() - 1].first)) {
-				if (containers[containers.size() - 1].first == "while") {//while
+				if (containers[containers.size() - 1].first == "while") {//end of while
 					vector<int> temp = containerEndList.back().second;
 					if (find(temp.begin(), temp.end(), stmtNum) == temp.end()) {
 						containerEndList.back().second.push_back(containerList.back().second);
 						containerEndList.back().second.push_back(stmtNum);
 						prevStmtNumList[procedureName].push_back(containerList.back().second);
-						Database::insertNext(to_string(stmtNum), to_string(containerList.back().second),"1");
+						Database::insertNext(to_string(stmtNum), to_string(containerList.back().second),"1","0");
 						whileSkip = true;
 					}
 					else {
 						containerEndList.back().second.pop_back();
-						Database::insertNext(to_string(containerEndList.back().second.back()), to_string(containerList.back().second), "1");
+						Database::insertNext(to_string(containerEndList.back().second.back()), to_string(containerList.back().second), "1", "0");
 						prevStmtNumList[procedureName].push_back(containerList.back().second);
 					}
 					indPrevStmtNumList = checkPopBack(indPrevStmtNumList);
 					whileList.pop_back();
 				}
-				else { //ifelse
+				else { //end of ifelse
 					containerEndList.back().second.push_back(stmtNum);
 					prevStmtNumList[procedureName] = containerEndList.back().second; //pass consolidated end points to list, this list will be used when stmtNum increments
 					indPrevStmtNumList = checkPopBack(indPrevStmtNumList);//erase temp list used for ifelse
@@ -320,7 +326,7 @@ void SourceProcessor::process(string program) {
 				containers.pop_back();
 				containerList.pop_back();
 			}
-			else { //if
+			else { //end of if
 				containerEndList.push_back({ containerList.back().first, {stmtNum} });//insert to endStmtList vector for current container
 				for (int i = 0; i < prevStmtNumList[procedureName].size(); i++) {
 					containerEndList.back().second.push_back(prevStmtNumList[procedureName].at(i));
@@ -369,7 +375,7 @@ void SourceProcessor::process(string program) {
 
 			//handle general NEXT relation
 			if (prevStmtNum && (prevProcedure == procedureName) && !whileSkip) { //add a flag to skip end of while
-				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
+				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1","0");
 			}
 			else {
 				whileSkip = false;
@@ -378,7 +384,7 @@ void SourceProcessor::process(string program) {
 			//handle end of if-else + while => NEXT relation 
 			while (prevStmtNumList[procedureName].size()) {
 				prevStmtNum = prevStmtNumList[procedureName].back();
-				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1");
+				Database::insertNext(to_string(prevStmtNum), to_string(stmtNum), "1", "0");
 				prevStmtNumList[procedureName].pop_back();
 			}
 

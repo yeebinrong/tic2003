@@ -56,7 +56,7 @@ void Database::initialize() {
 
 	// drop the existing next table (if any)
 	executeQuery("DROP TABLE IF EXISTS nexts");
-	executeQuery("CREATE TABLE nexts ( stmtNo VARCHAR(255), prevStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'), PRIMARY KEY(stmtNo, prevStmtNo, direct)); ");
+	executeQuery("CREATE TABLE nexts ( stmtNo VARCHAR(255), prevStmtNo VARCHAR(255), direct VARCHAR(255) DEFAULT '0', directCont VARCHAR(255) DEFAULT '0', CHECK (direct == '0' OR direct == '1'),PRIMARY KEY(stmtNo, prevStmtNo, direct, directCont)); ");
 
 	// drop the existing parent table (if any)
 	executeQuery("DROP TABLE IF EXISTS parents");
@@ -167,8 +167,8 @@ void Database::insertUses(string stmtNo, string procedureName, string target) {
 }
 
 // method to insert a Next into the database
-void Database::insertNext(string stmtNo, string nextStmtNo, string direct) {
-	Database::executeQuery(generateInsertQuery("nexts", { "prevStmtNo", "stmtNo", "direct" }, { stmtNo, nextStmtNo, direct }));
+void Database::insertNext(string prevStmtNo, string stmtNo, string direct, string directCont) {
+	Database::executeQuery(generateInsertQuery("nexts", { "prevStmtNo", "stmtNo", "direct", "directCont"}, { prevStmtNo, stmtNo, direct, directCont}));
 }
 
 // method to insert a Parent into the database

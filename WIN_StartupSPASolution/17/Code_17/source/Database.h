@@ -66,7 +66,7 @@ public:
 	static void insertUses(string stmtno, string procedureName, string target);
 
 	// method to insert a Next into the database
-	static void insertNext(string stmtNo, string nextStmtNo, string direct);
+	static void insertNext(string prevStmtNo, string stmtNo, string direct, string directCont);
 
 	// method to insert a Parent into the database
 	static void insertParent(string stmtNo, string parentStmtNo, string direct, string isFirst);
