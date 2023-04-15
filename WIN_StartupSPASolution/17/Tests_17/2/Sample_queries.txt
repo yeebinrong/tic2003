@@ -1,4 +1,4 @@
-1 - identify children statements of parent statement 4
+1 - test2 identify children statements of parent statement 4
 stmt s;
 Select s such that Parent (4, s)
 5, 8, 12, 21, 22
